@@ -77,6 +77,38 @@ return {
                     "{C:pink,T:c_poke_double_rainbow_energy}#2#"
                 } 
             },
+            b_poke_futuredeck = {
+                name = "Future Deck",
+                text = {
+                    "{C:purple}+#1# Foresight{}",
+                } 
+            },
+            b_poke_stadiumdeck = {
+                name = "Stadium Deck",
+                text = {
+                    "Start the run with",
+                    "an additional {C:attention}Bonus, Mult,",
+                    "{C:attention}Wild, Glass, Steel, Stone,",
+                    "{C:attention}Gold{}, and {C:attention}Lucky{} card"
+                } 
+            },
+            b_poke_megadeck = {
+                name = "Mega Deck",
+                text = {
+                    "Start the run with the",
+                    "{C:tarot,T:v_reroll_surplus}#2#{} and {C:tarot,T:v_reroll_glut}#3#{} vouchers",
+                    "and a {C:spectral,T:c_poke_megastone}#1#{} card",
+                    "{C:red}-#4#{} shop slot"
+                } 
+            },
+            b_poke_vendingdeck = {
+                name = "Vending Deck",
+                text = {
+                    "After defeating each",
+                    "{C:attention}Odd Boss Blind{}, gain a",
+                    "{C:attention,T:tag_vremade_double}#1#",
+                } 
+            },
         },
         Blind = {
             bl_poke_cgoose = {
@@ -555,6 +587,12 @@ return {
                     "{C:pink}Energize{} leftmost or selected",
                     "{X:earth,C:white}Earth{} Joker if able",
                     "{C:inactive}(Max of {C:attention}#1#{C:inactive} increases per Joker)",
+                },
+            },
+            c_poke_bird_energy = {
+                name = "Bird Energy",
+                text = {
+                  ""
                 },
             },
             c_poke_emergy = {
@@ -1463,7 +1501,7 @@ return {
                 text = {
                     "{C:mult}+#1#{} Mult per card over {C:attention}#2#{} in your deck",
                     "{br:4}ERROR - CONTACT STEAK",
-                    "At end of round, remove {C:attention}1{} random card",
+                    "At end of round, destroy {C:attention}1{} random card",
                     "from deck then add {C:attention}2{} random cards",
                     "{C:inactive}(Currently {C:mult}+#3#{} {C:inactive}Mult){}"
                 } 
@@ -4272,6 +4310,90 @@ return {
                     "or {C:dark_edition}Polychrome{} to it",
                 } 
             },
+            j_poke_pumpkaboo_small = {
+                name = 'Pumpkaboo (Small)',
+                text = {
+                  "After discarding {C:attention}#1#{} {C:inactive}[#2#]{} {C:attention}Jacks,",
+                  "create a {C:spectral}Spectral{} card",
+                  "{C:inactive}(Must have room)",
+                  "{C:inactive,s:0.8}(Evolves with a {C:attention,s:0.8}Linking Cord{C:inactive,s:0.8})"
+                }
+            },
+            j_poke_pumpkaboo_average = {
+                name = 'Pumpkaboo (Average)',
+                text = {
+                  "After discarding {C:attention}#1#{} {C:inactive}[#2#]{} {C:attention}Jacks,",
+                  "create a {C:spectral}Spectral{} card",
+                  "{C:inactive}(Must have room)",
+                  "{C:inactive,s:0.8}(Evolves with a {C:attention,s:0.8}Linking Cord{C:inactive,s:0.8})"
+                }
+            },
+            j_poke_pumpkaboo_large = {
+                name = 'Pumpkaboo (Large)',
+                text = {
+                  "After discarding {C:attention}#1#{} {C:inactive}[#2#]{} {C:attention}Jacks,",
+                  "create a {C:spectral}Spectral{} card",
+                  "{C:inactive}(Must have room)",
+                  "{C:inactive,s:0.8}(Evolves with a {C:attention,s:0.8}Linking Cord{C:inactive,s:0.8})"
+                }
+            },
+            j_poke_pumpkaboo_super = {
+                name = 'Pumpkaboo (Super)',
+                text = {
+                  "After discarding {C:attention}#1#{} {C:inactive}[#2#]{} {C:attention}Jacks,",
+                  "create a {C:spectral}Spectral{} card",
+                  "{C:inactive}(Must have room)",
+                  "{C:inactive,s:0.8}(Evolves with a {C:attention,s:0.8}Linking Cord{C:inactive,s:0.8})"
+                }
+            },
+            j_poke_gourgeist_small = {
+                name = "Gourgeist (Small)",
+                text = {
+                  "After discarding {C:attention}#1#{} {C:inactive}[#2#]{} {C:attention}Jacks,",
+                  "create a {C:spectral}Spectral{} card",
+                  "{C:inactive}(Must have room)",
+                  "{br:2}ERROR - CONTACT STEAK",
+                  "Earn {C:money}$#3#{} when a {C:spectral}Spectral{} card",
+                  "is used and apply a {X:psychic,C:white}Psychic{}",
+                  "sticker to {C:attention}leftmost{} Joker"
+                }
+            },
+            j_poke_gourgeist_average = {
+                name = "Gourgeist (Average)",
+                text = {
+                  "After discarding {C:attention}#1#{} {C:inactive}[#2#]{} {C:attention}Jacks,",
+                  "create a {C:spectral}Spectral{} card",
+                  "{C:inactive}(Must have room)",
+                  "{br:2}ERROR - CONTACT STEAK",
+                  "Earn {C:money}$#3#{} when a {C:spectral}Spectral{} card",
+                  "is used and apply a {X:psychic,C:white}Psychic{}",
+                  "sticker to {C:attention}leftmost{} Joker"
+                }
+            },
+            j_poke_gourgeist_large = {
+                name = "Gourgeist (Large)",
+                text = {
+                  "After discarding {C:attention}#1#{} {C:inactive}[#2#]{} {C:attention}Jacks,",
+                  "create a {C:spectral}Spectral{} card",
+                  "{C:inactive}(Must have room)",
+                  "{br:2}ERROR - CONTACT STEAK",
+                  "Earn {C:money}$#3#{} when a {C:spectral}Spectral{} card",
+                  "is used and apply a {X:psychic,C:white}Psychic{}",
+                  "sticker to {C:attention}leftmost{} Joker"
+                }
+            },
+            j_poke_gourgeist_super = {
+                name = "Gourgeist (Super)",
+                text = {
+                  "After discarding {C:attention}#1#{} {C:inactive}[#2#]{} {C:attention}Jacks,",
+                  "create a {C:spectral}Spectral{} card",
+                  "{C:inactive}(Must have room)",
+                  "{br:2}ERROR - CONTACT STEAK",
+                  "Earn {C:money}$#3#{} when a {C:spectral}Spectral{} card",
+                  "is used and apply a {X:psychic,C:white}Psychic{}",
+                  "sticker to {C:attention}leftmost{} Joker"
+                }
+            },
             j_poke_grubbin = {
                 name = 'Grubbin',
                 text = {
@@ -4870,6 +4992,38 @@ return {
                     "{C:tarot,T:v_poke_energysearch}#1#{} voucher",
                     "and a copy of",
                     "{C:pink,T:c_poke_double_rainbow_energy}#2#"
+                } 
+            },
+            sleeve_poke_futuresleeve = {
+                name = "Future Sleeve",
+                text = {
+                    "{C:purple}+#1# Foresight{}",
+                } 
+            },
+            sleeve_poke_stadiumsleeve = {
+                name = "Stadium Sleeve",
+                text = {
+                    "Start the run with",
+                    "an additional {C:attention}Bonus, Mult,",
+                    "{C:attention}Wild, Glass, Steel, Stone,",
+                    "{C:attention}Gold{}, and {C:attention}Lucky{} card"
+                } 
+            },
+            sleeve_poke_megasleeve = {
+                name = "Mega Sleeve",
+                text = {
+                    "Start the run with the",
+                    "{C:tarot,T:v_reroll_surplus}#2#{} and {C:tarot,T:v_reroll_glut}#3#{} vouchers",
+                    "and a {C:spectral,T:c_poke_megastone}#1#{} card",
+                    "{C:red}-#4#{} shop slot"
+                } 
+            },
+            sleeve_poke_vendingsleeve = {
+                name = "Vending Sleeve",
+                text = {
+                    "After defeating each",
+                    "{C:attention}Odd Boss Blind{}, gain a",
+                    "{C:attention,T:tag_vremade_double}#1#",
                 } 
             },
         },
@@ -5608,6 +5762,14 @@ return {
                 "tooltips from Pokemon Jokers",
               }
             },
+			previous_evo_stickers_tooltip = {
+              name = "Previous Evo Stickers",
+              text = {
+                "Previous evolutions of",
+                "winning Jokers also",
+                "win the current run",
+              }
+            },
             legacycontent_tooltip = {
               name = "Legacy Content",
               text = {
@@ -5928,6 +6090,10 @@ return {
             k_poke_pocket_pack = "Pocket Pack",
             k_poke_wish_pack = "Wish Pack",
             k_poke_starter_pack = "Starter Pack",
+            k_poke_gives = "Gives",
+            k_poke_ignores = "Ignores",
+            k_poke_limit = "Limit",
+            k_poke_pp = "PP UP",
             
             k_poke_baby = "Baby",
             k_poke_safari = "Safari",
@@ -5944,6 +6110,7 @@ return {
             poke_settings_unlimited_energy = "Unlmited Energy?",
             poke_settings_shiny_playing_cards = "Shiny on playing cards?",
             poke_settings_pokemon_detailed_tooltips = "Detailed Tooltips?",
+			poke_settings_previous_evo_stickers = "Previous Evo Stickers?",
             poke_settings_jokers_only = "Jokers only?",
             poke_settings_no_evolutions = "No Evolutions?",
             poke_settings_pokeballs = "Allow Pokéballs?",
@@ -6013,6 +6180,7 @@ return {
             silverseal_variable = "Silver Seal",
             twisted_spoon_variable = "Twisted Spoon",
             double_rainbow_energy_variable = "Double Rainbow Energy",
+            megastone_variable = "Mega Stone",
 
             --From Gastly Line
             poke_lick_ex = "Lick!",
@@ -6021,6 +6189,7 @@ return {
             poke_surf_ex = "Surf!",
             --From Voltorb Line
             poke_explosion_ex = "BOOM!",
+            poke_boo_ex = "BOO!",
             --From Exeggutor
             poke_solar_ex = "Solar!",
             poke_solar = "Solar",
@@ -6081,6 +6250,8 @@ return {
             poke_iron_tail_ex = "Iron Tail!",
             poke_autotomize_ex = "Autotomize!",
             poke_highjumpkick_ex = "High Jump Kick!",
+            poke_water_gun_ex = "Water Gun!",
+            poke_sky_attack_ex = "Sky Attack!",
             
             poke_grass_badge = "Grass",
             poke_fire_badge = "Fire",

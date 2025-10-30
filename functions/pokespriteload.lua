@@ -350,7 +350,7 @@ swalot = {base = {pos = {x = 2, y = 21}},},
 carvanha = {base = {pos = {x = 4, y = 21}},},
 sharpedo = {base = {pos = {x = 6, y = 21}},},
 wailmer = {base = {pos = {x = 8, y = 21}},},
-wailord = {base = {pos = {x = 10, y = 21}},},
+wailord = {base = {pos = {x = 10, y = 21}},alts = {AtlasJokersSeriesA = {artist = 'Celsie_RS'}}},
 numel = {base = {pos = {x = 12, y = 21}},},
 camerupt = {base = {pos = {x = 14, y = 21}},},
 mega_camerupt = {base = {pos = {x = 0, y = 6}, soul_pos = {x = 1, y = 6}},gen_atlas = true},
@@ -477,7 +477,7 @@ bronzong = {base = {pos = {x = 2, y = 29}},},
 bonsly = {base = {pos = {x = 4, y = 29}},alts = {AtlasJokersSeriesA = {artist = 'RedHaering'}}},
 mimejr = {base = {pos = {x = 6, y = 29}},alts = {AtlasJokersSeriesA = {artist = 'RedHaering'}}},
 happiny = {base = {pos = {x = 8, y = 29}},},
-chatot = {base = {pos = {x = 10, y = 29}},},
+chatot = {base = {pos = {x = 10, y = 29}},alts = {AtlasJokersSeriesA = {artist = 'RedHaering'}}},
 spiritomb = {base = {pos = {x = 12, y = 29}},},
 gible = {base = {pos = {x = 14, y = 29}},},
 gabite = {base = {pos = {x = 16, y = 29}},},
@@ -752,8 +752,8 @@ goodra = {base = {pos = {x = 0, y = 47}},},
 klefki = {base = {pos = {x = 2, y = 47}},},
 phantump = {base = {pos = {x = 4, y = 47}},},
 trevenant = {base = {pos = {x = 6, y = 47}},},
-pumpkaboo = {base = {pos = {x = 8, y = 47}},},
-gourgeist = {base = {pos = {x = 10, y = 47}},},
+pumpkaboo = {base = {pos = {x = 0, y = 9}},gen_atlas = true},
+gourgeist = {base = {pos = {x = 8, y = 9}},gen_atlas = true},
 bergmite = {base = {pos = {x = 12, y = 47}},},
 avalugg = {base = {pos = {x = 14, y = 47}},},
 noibat = {base = {pos = {x = 16, y = 47}},},
@@ -779,7 +779,7 @@ toucannon = {base = {pos = {x = 24, y = 48}},},
 yungoos = {base = {pos = {x = 26, y = 48}},},
 gumshoos = {base = {pos = {x = 28, y = 48}},},
 grubbin = {base = {pos = {x = 0, y = 49}}, alts= {AtlasJokersSeriesA = {artist = 'Gappie'}}},
-charjabug = {base = {pos = {x = 2, y = 49}},},
+charjabug = {base = {pos = {x = 2, y = 49}}, alts= {AtlasJokersSeriesA = {artist = 'Gappie'}}},
 vikavolt = {base = {pos = {x = 4, y = 49}},},
 crabrawler = {base = {pos = {x = 6, y = 49}},},
 crabominable = {base = {pos = {x = 8, y = 49}},},
@@ -814,7 +814,7 @@ passimian = {base = {pos = {x = 0, y = 51}},},
 wimpod = {base = {pos = {x = 2, y = 51}},},
 golisopod = {base = {pos = {x = 4, y = 51}},},
 sandygast = {base = {pos = {x = 6, y = 51}},alts = {AtlasJokersSeriesA = {artist = 'Gappie'}}},
-palossand = {base = {pos = {x = 8, y = 51}},},
+palossand = {base = {pos = {x = 8, y = 51}},alts = {AtlasJokersSeriesA = {artist = 'Gappie'}}},
 pyukumuku = {base = {pos = {x = 10, y = 51}}, alts = {AtlasJokersSeriesA = {artist = 'Gappie'}}},
 typenull = {base = {pos = {x = 12, y = 51}, soul_pos =  {x = 13, y = 51}},},
 silvally = {base = {pos = {x = 14, y = 51}, soul_pos =  {x = 15, y = 51}},},
@@ -1096,6 +1096,7 @@ local poke_artist_info = {
   Desnik = {display_name = 'Desnik', artist_colour = HEX("FDDF00")},
   Dudelings = {display_name = 'Dudelings', artist_colour = HEX("F0493A")},
   Gappie = {display_name = 'Gappie', artist_colour = HEX('FFE062')},
+  InertSteak = {display_name = 'InertSteak', artist_colour = HEX('77A5BC'), highlight_colour = HEX('C1C3C2')},
   Maelmc = {display_name = 'Maelmc', artist_colour = HEX("EA6F22")},
   MyDude_YT = {display_name = 'MyDude YT', artist_colour = HEX("FFFFFF"), highlight_colour = HEX("4428BC")},
   PrincessRoxie = {display_name = 'PrincessRoxie', artist_colour = HEX("FF88FF")},
@@ -1202,5 +1203,11 @@ poke_load_atlas = function(item)
         item.poke_lookup_atlas = atlas_prefix..gen_string
       end
     end
+  end
+end
+
+poke_get_artist_info = function(name)
+  if poke_artist_info[name] then
+    return poke_artist_info[name]
   end
 end

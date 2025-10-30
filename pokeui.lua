@@ -36,7 +36,8 @@ local joker_pool_toggles = {
 
 local misc_no_restart_toggles = {
   {ref_value = "shiny_playing_cards", label = "poke_settings_shiny_playing_cards", tooltip = {set = 'Other', key = 'shinyplayingcard_tooltip'}},
-  {ref_value = "detailed_tooltips", label = "poke_settings_pokemon_detailed_tooltips", tooltip = {set = 'Other', key = 'detailed_tooltips_tooltip'}}
+  {ref_value = "detailed_tooltips", label = "poke_settings_pokemon_detailed_tooltips", tooltip = {set = 'Other', key = 'detailed_tooltips_tooltip'}},
+  {ref_value = "previous_evo_stickers", label = "poke_settings_previous_evo_stickers", tooltip = {set = 'Other', key = 'previous_evo_stickers_tooltip'}}
 }
 
 local content_toggles = {
@@ -519,7 +520,7 @@ SMODS.current_mod.extra_tabs = function()
               {
                 n = G.UIT.T,
                 config = {
-                  text = "Marie|Tsunami, CBMX, ...and you!",
+                  text = "Marie|Tsunami, CBMX, 64x64 Pokémon Sprite Resource...and you!",
                   shadow = true,
                   scale = scale * 0.8,
                   colour = G.C.BLUE
@@ -809,6 +810,7 @@ G.FUNCS.your_collection_pokemon_page = function(args)
         if type(akeys[j]) == "table" then
           card.ability.extra.form = akeys[j].form
           G.P_CENTERS[key]:set_sprites(card)
+          if G.P_CENTERS[key].set_ability then G.P_CENTERS[key]:set_ability(card) end
         end
         G.your_collection[i]:emplace(card)
     end
@@ -843,6 +845,7 @@ create_UIBox_pokedex_jokers = function(keys, previous_menu)
         if type(keys[j]) == "table" then
           card.ability.extra.form = keys[j].form
           G.P_CENTERS[key]:set_sprites(card)
+          if G.P_CENTERS[key].set_ability then G.P_CENTERS[key]:set_ability(card) end
         end
         G.your_collection[i]:emplace(card)
       end
@@ -869,6 +872,7 @@ create_UIBox_pokedex_jokers = function(keys, previous_menu)
         if type(keys[j]) == "table" and G.P_CENTERS[key].set_sprites then
           card.ability.extra.form = keys[j].form
           G.P_CENTERS[key]:set_sprites(card)
+          if G.P_CENTERS[key].set_ability then G.P_CENTERS[key]:set_ability(card) end
         end
         G.your_collection[i]:emplace(card)
       end
@@ -892,6 +896,7 @@ create_UIBox_pokedex_jokers = function(keys, previous_menu)
       if type(keys[i]) == "table" then
         card.ability.extra.form = keys[i].form
         G.P_CENTERS[key]:set_sprites(card)
+        if G.P_CENTERS[key].set_ability then G.P_CENTERS[key]:set_ability(card) end
       end
       G.your_collection[1]:emplace(card)
     end

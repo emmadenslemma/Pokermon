@@ -23,10 +23,11 @@ return {
   ["hazards_on"]=true,
   ["pokemon_discovery"]=true,
   ["pokemon_altart"]=true,
+  ["previous_evo_stickers"]=true,
   ["poke_enable_animations"]=true,
   ["pokemon_aprilfools"]=false,
   ["pokemon_legacy"]=false,
-  ["pokemon_spritesheet_id"]=1,
-  ["pokemon_spritesheet_atlas"]="Classic",
+  ["pokemon_spritesheet_id"]=2,
+  ["pokemon_spritesheet_atlas"]="Series A",
   ["pokemon_spritesheet_overrides"] = {}
 }
