@@ -784,15 +784,3 @@ if pokermon_config.previous_evo_stickers then
 end
 '''
 match_indent = true
-
-# Unown Swarm Stickers
-[[patches]]
-[patches.pattern]
-target = '=[SMODS _ "src/card_draw.lua"]'
-pattern = '''order = 40,
-    func = function(self, layer)'''
-position = "after"
-payload = '''if self.config.center.key == 'j_poke_unown_swarm' then return end'''
-match_indent = true
-
-
