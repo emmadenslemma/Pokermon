@@ -560,12 +560,21 @@ local unown_swarm={
   pos = {x = 0, y = 0},
   soul_pos = {x = 0, y = 0,
     draw = function(card, scale_mod, rotate_mod)
-      -- AAAAA
-      card.VT.w = card.T.w
-      card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod, rotate_mod, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)
+      -- keep track on the previous VT.x value to avoid weird snapping effects on drag release
+      local old_x = card.children.center.VT.x
+
+      card.children.center.VT.x = old_x - card.T.w / 2 * 0.174 -- I truly have no idea where this number is from but it works
+      card.children.center.VT.w = card.T.w / 3 -- (285 / 95)
+      card.children.center.VT.h = card.T.h / 3
+
+      card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod, rotate_mod)
       card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod, rotate_mod)
-      card.VT.w = card.T.w * 1.174
-    end},
+
+      card.children.center.VT.x = old_x
+      card.children.center.VT.w = card.T.w
+      card.children.center.VT.h = card.T.h
+    end
+  },
   config = {extra = {mult = 28, Xmult_multi = 2.8}},
   loc_vars = function(self, info_queue, center)
     type_tooltip(self, info_queue, center)
@@ -575,7 +584,7 @@ local unown_swarm={
   cost = 10,
   stage = "Other",
   ptype = "Psychic",
-  atlas = "j_poke_unown_swarm",
+  atlas = "poke_j_poke_unown_swarm",
   perishable_compat = true,
   blueprint_compat = true,
   eternal_compat = true,
@@ -597,41 +606,16 @@ local unown_swarm={
     end
   end,
   set_sprites = function(self, card, front)
-    if self.discovered or card.bypass_discovery_center then
-      card.children.center:reset()
-      if card.children.floating_sprite then
-        card.children.floating_sprite.atlas = G.ANIMATION_ATLAS[card.children.center.atlas.name .. "_soul"]
-        card.children.floating_sprite:reset()
-      end
+    if self.discovered or card.bypass_discovery_center and card.children.floating_sprite then
+      -- animated sprites are different internally to regular sprites, so we have to fully replace it
+      card.children.floating_sprite:remove()
+      local soul_atlas = 'poke_j_poke_unown_swarm_' .. (card.edition and card.edition.poke_shiny and 'shiny_' or '') .. 'soul'
+      card.children.floating_sprite = SMODS.create_sprite(card.T.x, card.T.y, card.T.w, card.T.h, soul_atlas, {x = 0, y = 0})
+      card.children.floating_sprite.role.draw_major = card
+      card.children.floating_sprite.states.hover.can = false
+      card.children.floating_sprite.states.click.can = false
     end
   end,
-  update = function(self, card, dt)
-    card.children.center.VT.x = card.T.x - (G.CARD_H - G.CARD_W) / 2
-    card.children.floating_sprite.VT.x = card.children.center.VT.x
-    card.VT.w = card.T.w * 1.174
-
-	if card.front_card then
-	  card.front_card.children.center.VT.x = card.children.center.VT.x + 0.35
-	  card.front_card.children.center.VT.y = card.children.center.VT.y
-	  card.front_card.tilt_var = card.tilt_var
-	  card.front_card.states.hover = card.states.hover
-	  card.front_card.states.click = card.states.click
-	  card.front_card.states.drag = card.states.drag
-	end
-  end,
-  draw = function(self, card, layer)
-    if not card.front_card then
-      local front_card = SMODS.create_card({set = 'Base', area = card.area})
-      front_card.states.visible = nil
-      front_card.children.center:set_role({major = card, role_type = 'Glued', draw_major = card})
-      front_card.children.center.states.hover = card.states.hover
-      front_card.children.center.states.click = card.states.click
-      front_card.children.center.states.drag = card.states.drag
-      front_card.children.center.states.collide.can = false
-      front_card:hard_set_T(card.T.x, card.T.y, card.T.w, card.T.h)
-      card.front_card = front_card
-    end
-  end
 }
 
 local billion_lions = {
