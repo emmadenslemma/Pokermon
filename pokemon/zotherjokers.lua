@@ -560,19 +560,14 @@ local unown_swarm={
   pos = {x = 0, y = 0},
   soul_pos = {x = 0, y = 0,
     draw = function(card, scale_mod, rotate_mod)
-      -- keep track on the previous VT.x value to avoid weird snapping effects on drag release
-      local old_x = card.children.center.VT.x
+      for k,v in pairs(card.children.center.VT) do
+        card.children.floating_sprite.VT[k] = v
+      end
+      local offset_x = (-card.T.w) * 0.174 -- I truly have no idea where this number is from but it works
 
-      card.children.center.VT.x = old_x - card.T.w / 2 * 0.174 -- I truly have no idea where this number is from but it works
-      card.children.center.VT.w = card.T.w / 3 -- (285 / 95)
-      card.children.center.VT.h = card.T.h / 3
-
-      card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod, rotate_mod)
-      card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod, rotate_mod)
-
-      card.children.center.VT.x = old_x
-      card.children.center.VT.w = card.T.w
-      card.children.center.VT.h = card.T.h
+      -- draws from itself in `other_obj` because otherwise the positioning modifiers (scale_mod, rotate_mod, offset_x) get thrown out
+      card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.floating_sprite, scale_mod, rotate_mod, offset_x)
+      card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.floating_sprite, scale_mod, rotate_mod, offset_x)
     end
   },
   config = {extra = {mult = 28, Xmult_multi = 2.8}},
