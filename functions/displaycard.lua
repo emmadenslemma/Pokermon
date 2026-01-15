@@ -1,6 +1,10 @@
 PokeDisplayCard = Card:extend()
 
 function PokeDisplayCard:init(args, x, y, w, h)
+  if args.existing_key then
+    return self:init_from_existing(args.existing_key, args, x, y, w, h)
+  end
+
   w = w or args.w or G.CARD_W
   h = h or args.h or G.CARD_H
 
@@ -21,6 +25,51 @@ function PokeDisplayCard:init(args, x, y, w, h)
   Card.init(self, x, y, w, h, nil, fake_center)
 
   self.sticker_run = 'NONE'
+end
+
+function PokeDisplayCard:init_from_existing(key, args, x, y, w, h)
+  local existing_obj
+  local new_args = copy_table(args)
+  new_args.existing_key = nil
+
+  if args.set == 'Seal' then
+    existing_obj = G.P_SEALS[key]
+  elseif args.set == 'Tag' then
+    existing_obj = G.P_TAGS[key]
+    w = 0.8
+    h = 0.8
+  elseif args.set == 'Blind' then
+    existing_obj = G.P_BLINDS[key]
+    w = 1.3
+    h = 1.3
+  else
+    existing_obj = G.P_CENTERS[key]
+    if args.set == 'Booster' then
+      w = G.CARD_W*1.27
+      h = G.CARD_H*1.27
+    end
+  end
+
+  new_args.atlas = existing_obj.atlas
+  new_args.pos = existing_obj.pos
+  new_args.soul_pos = existing_obj.soul_pos
+
+  if args.set == 'Booster' or args.set == 'Sticker' then
+    new_args.display_text = localize { type = 'name_text', set = 'Other', key = key }
+  elseif args.set == 'Seal' then
+    new_args.display_text = localize { type = 'name_text', set = 'Other', key = key..'_seal' }
+  else
+    new_args.display_text = localize { type = 'name_text', set = args.set, key = key }
+  end
+
+  if args.set == 'Booster' or args.set == 'Spectral' or key == 'poke_silver' then
+    new_args.shader = 'booster'
+  end
+  if args.set == 'Voucher' then
+    new_args.shader = 'voucher'
+  end
+
+  self:init(new_args, x, y, w, h)
 end
 
 -- Controller support
