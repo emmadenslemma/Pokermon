@@ -5,8 +5,10 @@ function PokeDisplayCard:init(args, x, y, w, h)
     return self:init_from_existing(args.existing_key, args, x, y, w, h)
   end
 
-  w = w or args.w or G.CARD_W
-  h = h or args.h or G.CARD_H
+  local default_w, default_h = self.get_size(args.set)
+
+  w = w or args.w or default_w
+  h = h or args.h or default_h
 
   local properties = {
     atlas = args.atlas,
@@ -27,28 +29,25 @@ function PokeDisplayCard:init(args, x, y, w, h)
   self.sticker_run = 'NONE'
 end
 
+function PokeDisplayCard.get_size(set)
+  if set == 'Tag' then
+    return 0.8, 0.8
+  elseif set == 'Blind' then
+    return 1.3, 1.3
+  elseif set == 'Booster' then
+    return G.CARD_W * 1.27, G.CARD_H * 1.27
+  end
+  return G.CARD_W, G.CARD_H
+end
+
 function PokeDisplayCard:init_from_existing(key, args, x, y, w, h)
-  local existing_obj
   local new_args = copy_table(args)
   new_args.existing_key = nil
 
-  if args.set == 'Seal' then
-    existing_obj = G.P_SEALS[key]
-  elseif args.set == 'Tag' then
-    existing_obj = G.P_TAGS[key]
-    w = 0.8
-    h = 0.8
-  elseif args.set == 'Blind' then
-    existing_obj = G.P_BLINDS[key]
-    w = 1.3
-    h = 1.3
-  else
-    existing_obj = G.P_CENTERS[key]
-    if args.set == 'Booster' then
-      w = G.CARD_W*1.27
-      h = G.CARD_H*1.27
-    end
-  end
+  local existing_obj = (args.set == 'Seal' and G.P_SEALS[key])
+      or (args.set == 'Tag' and G.P_TAGS[key])
+      or (args.set == 'Blind' and G.P_BLINDS[key])
+      or G.P_CENTERS[key]
 
   new_args.atlas = existing_obj.atlas
   new_args.pos = existing_obj.pos
@@ -57,7 +56,7 @@ function PokeDisplayCard:init_from_existing(key, args, x, y, w, h)
   if args.set == 'Booster' or args.set == 'Sticker' then
     new_args.display_text = localize { type = 'name_text', set = 'Other', key = key }
   elseif args.set == 'Seal' then
-    new_args.display_text = localize { type = 'name_text', set = 'Other', key = key..'_seal' }
+    new_args.display_text = localize { type = 'name_text', set = 'Other', key = key .. '_seal' }
   else
     new_args.display_text = localize { type = 'name_text', set = args.set, key = key }
   end
