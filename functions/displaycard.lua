@@ -17,4 +17,6 @@ function PokeDisplayCard:init(args, x, y, w, h)
   })
 
   Card.init(self, x, y, w, h, nil, fake_center)
+
+  self.sticker_run = 'NONE'
 end
