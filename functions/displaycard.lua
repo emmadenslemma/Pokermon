@@ -8,11 +8,13 @@ function PokeDisplayCard:init(args, x, y, w, h)
     atlas = args.atlas,
     pos = args.pos,
     soul_pos = args.soul_pos,
+    stage = false, -- turns off pokedex view feature
   }
 
   local fake_center = setmetatable({}, {
     __index = function(_table, key)
-      return properties[key] or G.P_CENTERS.j_joker[key]
+      if properties[key] ~= nil then return properties[key] end
+      return G.P_CENTERS.j_poke_caterpie[key]
     end
   })
 
