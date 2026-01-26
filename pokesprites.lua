@@ -199,8 +199,8 @@ SMODS.Atlas({
 })
 
 SMODS.Atlas({
-    key = "j_poke_unown_swarm",
-    path = "j_poke_unown_swarm.png",
+    key = "JokerBasicUnownSwarmSoul",
+    path = "Basic Series/JokerBasicUnownSwarmSoul.png",
     px = 290,
     py = 285,
     atlas_table = 'ANIMATION_ATLAS',
@@ -209,28 +209,8 @@ SMODS.Atlas({
 })
 
 SMODS.Atlas({
-    key = "j_poke_unown_swarm_shiny",
-    path = "j_poke_unown_swarm_shiny.png",
-    px = 290,
-    py = 285,
-    atlas_table = 'ANIMATION_ATLAS',
-    frames = 36,
-    fps = 12
-})
-
-SMODS.Atlas({
-    key = "j_poke_unown_swarm_soul",
-    path = "j_poke_unown_swarm_soul.png",
-    px = 290,
-    py = 285,
-    atlas_table = 'ANIMATION_ATLAS',
-    frames = 36,
-    fps = 12
-})
-
-SMODS.Atlas({
-    key = "j_poke_unown_swarm_shiny_soul",
-    path = "j_poke_unown_swarm_shiny_soul.png",
+    key = "JokerBasicUnownSwarmSoulShiny",
+    path = "Basic Series/JokerBasicUnownSwarmSoulShiny.png",
     px = 290,
     py = 285,
     atlas_table = 'ANIMATION_ATLAS',
