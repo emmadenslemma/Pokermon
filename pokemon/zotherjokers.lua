@@ -565,13 +565,33 @@ local unown_swarm={
       for k,v in pairs(card.children.center.VT) do
         card.children.floating_sprite.VT[k] = v
       end
-      local offset_x = (-card.T.w) * 0.174 -- I truly have no idea where this number is from but it works
 
-      -- draws from itself in `other_obj` because otherwise the positioning modifiers (scale_mod, rotate_mod, offset_x) get thrown out
-      card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.floating_sprite, scale_mod, rotate_mod, offset_x)
-      card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.floating_sprite, scale_mod, rotate_mod, offset_x)
+      -- Unown Swarm sprite is offset by 37 pixels total (12.333 when downscaled), which is about 17%
+      local offset = (-card.T.w) * 0.1737
+      local angle = card.children.floating_sprite.VT.r
+
+      local offset_x = offset * math.cos(angle)
+      local offset_y = offset * math.sin(angle)
+
+      card.children.floating_sprite.VT.x = card.children.floating_sprite.VT.x + offset_x
+      card.children.floating_sprite.VT.y = card.children.floating_sprite.VT.y + offset_y
+
+      -- card.children.floating_sprite:draw_shader('dissolve')
+      -- card.children.floating_sprite:draw_shader('dissolve', 0)
+      -- draws from itself in `other_obj` because otherwise the positioning modifiers (scale_mod, rotate_mod) get thrown out
+      card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.floating_sprite, scale_mod, rotate_mod)
+      card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.floating_sprite, scale_mod, rotate_mod)
+
+      -- Drawing the edition shader manually so we can scale it properly
+      if card.edition then
+        local edition = G.P_CENTERS[card.edition.key]
+        if edition.apply_to_float or card.config.center.poke_apply_soul_edition then
+          card.children.floating_sprite:draw_shader(edition.shader, nil, nil, nil, card.children.floating_sprite, scale_mod, rotate_mod)
+        end
+      end
     end
   },
+  poke_skip_soul_edition = true, -- We're doing floating_sprite edition shaders ourselves
   config = {extra = {mult = 28, Xmult_multi = 2.8}},
   loc_vars = function(self, info_queue, center)
     type_tooltip(self, info_queue, center)
