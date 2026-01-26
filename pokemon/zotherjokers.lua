@@ -582,18 +582,21 @@ local unown_swarm={
       card.children.floating_sprite.VT.x = new_vt_x
       card.children.floating_sprite.VT.y = new_vt_y
 
+      local x_mod = 0
+      local y_mod = 0
+
       -- drawing from itself in `other_obj` stops the positioning modifiers (scale_mod, rotate_mod, x_mod) from being thrown out
       card.children.overlay_sprite:draw_shader('dissolve', 0)
-      card.children.overlay_sprite:draw_shader('dissolve', nil, nil, nil, card.children.overlay_sprite, nil, nil)
+      card.children.overlay_sprite:draw_shader('dissolve', nil, nil, nil, card.children.overlay_sprite, nil, nil, x_mod, y_mod)
 
-      card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.floating_sprite, scale_mod, rotate_mod)
-      card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.floating_sprite, scale_mod, rotate_mod)
+      card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.floating_sprite, scale_mod, rotate_mod, nil, 0.1 + 0.03 * math.sin(1.8 * G.TIMERS.REAL), nil, 0.6)
+      card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.floating_sprite, scale_mod, rotate_mod, x_mod, y_mod)
 
       -- Drawing the edition shader manually so we can scale it properly
       if card.edition then
         local edition = G.P_CENTERS[card.edition.key]
         if edition.apply_to_float or card.config.center.poke_apply_soul_edition then
-          card.children.floating_sprite:draw_shader(edition.shader, nil, nil, nil, card.children.floating_sprite, scale_mod, rotate_mod)
+          card.children.floating_sprite:draw_shader(edition.shader, nil, nil, nil, card.children.floating_sprite, scale_mod, rotate_mod, x_mod, y_mod)
         end
       end
     end
