@@ -563,22 +563,29 @@ local unown_swarm={
   soul_pos = {x = 0, y = 0,
     draw = function(card, scale_mod, rotate_mod)
       for k,v in pairs(card.children.center.VT) do
+        card.children.overlay_sprite.VT[k] = v
         card.children.floating_sprite.VT[k] = v
       end
 
-      -- Unown Swarm sprite is offset by 37 pixels total (12.333 when downscaled), which is about 17%
-      local offset = (-card.T.w) * 0.1737
-      local angle = card.children.floating_sprite.VT.r
+      -- Unown Swarm's overlay sprite is offset by 37 pixels total (12.333 when downscaled), which is about 17%
+      local sprite_offset = (-card.T.w) * 0.1737
+      local angle = card.children.center.VT.r
 
-      local offset_x = offset * math.cos(angle)
-      local offset_y = offset * math.sin(angle)
+      local x_offset = sprite_offset * math.cos(angle)
+      local y_offset = sprite_offset * math.sin(angle)
 
-      card.children.floating_sprite.VT.x = card.children.floating_sprite.VT.x + offset_x
-      card.children.floating_sprite.VT.y = card.children.floating_sprite.VT.y + offset_y
+      local new_vt_x = card.children.center.VT.x + x_offset
+      local new_vt_y = card.children.center.VT.y + y_offset
 
-      -- card.children.floating_sprite:draw_shader('dissolve')
-      -- card.children.floating_sprite:draw_shader('dissolve', 0)
-      -- draws from itself in `other_obj` because otherwise the positioning modifiers (scale_mod, rotate_mod) get thrown out
+      card.children.overlay_sprite.VT.x = new_vt_x
+      card.children.overlay_sprite.VT.y = new_vt_y
+      card.children.floating_sprite.VT.x = new_vt_x
+      card.children.floating_sprite.VT.y = new_vt_y
+
+      -- drawing from itself in `other_obj` stops the positioning modifiers (scale_mod, rotate_mod, x_mod) from being thrown out
+      card.children.overlay_sprite:draw_shader('dissolve', 0)
+      card.children.overlay_sprite:draw_shader('dissolve', nil, nil, nil, card.children.overlay_sprite, nil, nil)
+
       card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.floating_sprite, scale_mod, rotate_mod)
       card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.floating_sprite, scale_mod, rotate_mod)
 
@@ -625,9 +632,19 @@ local unown_swarm={
   set_sprites = function(self, card, front)
     if self.discovered or card.bypass_discovery_center and card.children.floating_sprite then
       -- animated sprites are different internally to regular sprites, so we have to fully replace it
-      card.children.floating_sprite:remove()
-      local soul_atlas = 'poke_j_poke_unown_swarm_' .. (card.edition and card.edition.poke_shiny and 'shiny_' or '') .. 'soul'
-      card.children.floating_sprite = SMODS.create_sprite(card.T.x, card.T.y, card.T.w, card.T.h, soul_atlas, {x = 0, y = 0})
+      if card.children.floating_sprite then card.children.floating_sprite:remove() end
+      if card.children.overlay_sprite then card.children.overlay_sprite:remove() end -- prevent memory leaks
+
+      local soul_atlas = 'poke_JokerBasicUnownSwarmSoul' .. (card.edition and card.edition.poke_shiny and 'Shiny' or '')
+
+      SMODS.draw_ignore_keys['overlay_sprite'] = true
+
+      card.children.overlay_sprite = SMODS.create_sprite(card.T.x, card.T.y, card.T.w, card.T.h, soul_atlas, {x = 0, y = 0})
+      card.children.overlay_sprite.role.draw_major = card
+      card.children.overlay_sprite.states.hover.can = false
+      card.children.overlay_sprite.states.click.can = false
+
+      card.children.floating_sprite = SMODS.create_sprite(card.T.x, card.T.y, card.T.w, card.T.h, soul_atlas, {x = 0, y = 1})
       card.children.floating_sprite.role.draw_major = card
       card.children.floating_sprite.states.hover.can = false
       card.children.floating_sprite.states.click.can = false
