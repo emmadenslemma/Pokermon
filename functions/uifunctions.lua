@@ -96,13 +96,56 @@ poke_random_text = function(strings, config)
           pop_delay = c_pop_delay, min_cycle_time = c_min_cycle_time}
 end
 
+poke_blueprint_compat_ui = function(copy)
+  local compatible = copy and copy.config.center.blueprint_compat
+
+  local text = localize('k_' .. (compatible and 'compatible' or 'incompatible'))
+  local colour = mix_colours(compatible and G.C.GREEN or G.C.RED, G.C.JOKER_GREY, 0.8)
+
+  return {
+    {n = G.UIT.C, config = {align = "bm", padding = 0.02}, nodes = {
+      {n = G.UIT.C, config = {align = "m", colour = colour, r = 0.05, padding = 0.05}, nodes = {
+        {n = G.UIT.T, config = {text = ' ' .. text .. ' ', colour = G.C.UI.TEXT_LIGHT, scale = 0.32 * 0.8}}
+      }}
+    }}
+  }
+end
+
+poke_generate_illusion_ui = function(other_center, info_queue, card, desc_nodes, specific_vars, full_UI_table)
+  -- Create the illusion joker's text boxes
+  local old_ability = card.ability
+  card.ability = copy_table(old_ability)
+  for k, v in pairs(other_center.config) do card.ability[k] = v end
+  other_center:generate_ui(info_queue, card, desc_nodes, specific_vars, full_UI_table)
+  card.ability = old_ability
+  -- Adds the "...?" to the end of the name
+  if next(full_UI_table.name[1].nodes) then
+    local name_nodes = full_UI_table.name[1].nodes
+    local dynatext = name_nodes[#name_nodes].nodes[1].config.object
+    dynatext.string = dynatext.string .. localize("poke_illusion")
+    dynatext.config.string = {dynatext.string}
+    dynatext.strings = {}
+    dynatext:update_text(true)
+  end
+end
+
+poke_set_card_type_badge = function(card, badges, center)
+  if not center then center = card.config.center end
+
+  local card_type = SMODS.Rarity:get_rarity_badge(center.rarity)
+  local card_type_colour = get_type_colour(center, card)
+  local card_type_text_colour = SMODS.get_card_type_text_colour('Joker', center, card)
+
+  badges[#badges+1] = create_badge(card_type, card_type_colour, card_type_text_colour, 1.2)
+end
+
 -- Collection Grid UI helper functions
-function poke_create_your_collection_card(key, x, y)
+function poke_create_your_collection_card(key, x, y, params)
   local form = type(key == 'table') and key.form
   local center_key = type(key == 'table') and key.key or key
   local center = G.P_CENTERS[center_key]
 
-  local card = Card(x, y, G.CARD_W, G.CARD_H, nil, center)
+  local card = Card(x, y, G.CARD_W, G.CARD_H, nil, center, params)
 
   if form and center.set_sprites then
     card.ability.extra.form = form
@@ -293,7 +336,8 @@ local site_colours = {
   ['carrd'] = HEX("4071B7"),
   ['discord'] = HEX("5865F2"),
   ['instagram'] = HEX("D60059"),
-  ['tiktok'] = HEX("283234")
+  ['tiktok'] = HEX("283234"),
+  ['deviantart'] = HEX('00E59B')
 }
 
 local function get_site_colour(domain)
@@ -394,10 +438,10 @@ G.FUNCS.toggle_pokermon_skins = function()
     if table.contains(vanilla_stakes, k) then
       if pokermon_config.stake_skins then
         SMODS.Stake:take_ownership(k, { atlas = "poke_pokestakes" }, true)
-        G.shared_stickers[string.sub(k, 7, -1)].atlas = G.ASSET_ATLAS["poke_pokestakes_stickers"]
+        G.shared_stickers[string.sub(k, 7, -1)].atlas = SMODS.get_atlas("poke_pokestakes_stickers")
       else
         SMODS.Stake:take_ownership(k, { atlas = "chips", prefix_config = { key = { mod = false } } }, true)
-        G.shared_stickers[string.sub(k, 7, -1)].atlas = G.ASSET_ATLAS["stickers"]
+        G.shared_stickers[string.sub(k, 7, -1)].atlas = SMODS.get_atlas("stickers")
       end
     end
   end

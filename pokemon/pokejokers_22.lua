@@ -20,20 +20,19 @@ local deino={
   blueprint_compat = true,
   eternal_compat = true,
   calculate = function(self, card, context)
-    if context.cardarea == G.jokers and context.scoring_hand and context.scoring_name == "Three of a Kind" then
+    if context.scoring_name == "Three of a Kind" then
+      if context.before and not context.blueprint then
+        card.ability.extra.hand_played = card.ability.extra.hand_played + 1
+      end
       if context.joker_main then
-        if not context.blueprint then
-          card.ability.extra.hand_played = card.ability.extra.hand_played + 1
-        end
         return {
-          message = localize{type = 'variable', key = 'a_xmult', vars = {card.ability.extra.Xmult}}, 
-          colour = G.C.mult,
-          Xmult_mod = card.ability.extra.Xmult
+          Xmult = card.ability.extra.Xmult
         }
       end
     end
     return scaling_evo(self, card, context, "j_poke_zweilous", card.ability.extra.hand_played, self.config.evo_rqmt)
-  end
+  end,
+  attributes = {"xmult", "hand_type", "trigger_evo"},
 }
 -- Zweilous 634
 local zweilous={
@@ -54,20 +53,19 @@ local zweilous={
   blueprint_compat = true,
   eternal_compat = true,
   calculate = function(self, card, context)
-    if context.cardarea == G.jokers and context.scoring_hand and context.scoring_name == "Three of a Kind" then
+    if context.scoring_name == "Three of a Kind" then
+      if context.before and not context.blueprint then
+        card.ability.extra.hand_played = card.ability.extra.hand_played + 1
+      end
       if context.joker_main then
-        if not context.blueprint then
-          card.ability.extra.hand_played = card.ability.extra.hand_played + 1
-        end
         return {
-          message = localize{type = 'variable', key = 'a_xmult', vars = {card.ability.extra.Xmult}}, 
-          colour = G.C.mult,
-          Xmult_mod = card.ability.extra.Xmult
+          Xmult = card.ability.extra.Xmult
         }
       end
     end
     return scaling_evo(self, card, context, "j_poke_hydreigon", card.ability.extra.hand_played, self.config.evo_rqmt)
-  end
+  end,
+  attributes = {"xmult", "hand_type", "trigger_evo"},
 }
 -- Hydreigon 635
 local hydreigon={
@@ -88,36 +86,27 @@ local hydreigon={
   blueprint_compat = true,
   eternal_compat = true,
   calculate = function(self, card, context)
-    if context.cardarea == G.jokers and context.scoring_hand then
-      if context.joker_main then
-        return {
-          message = localize{type = 'variable', key = 'a_xmult', vars = {card.ability.extra.Xmult}}, 
-          colour = G.C.XMULT,
-          Xmult_mod = card.ability.extra.Xmult
-        }
-      end
-      if context.after and context.scoring_name == "Three of a Kind" and not context.blueprint then
-        for k, v in pairs(context.full_hand) do
-          if not SMODS.in_scoring(v, context.scoring_hand) then
-            poke_remove_card(v, card)
-          end
-        end
-      end
+    if context.joker_main then
+      return {
+        Xmult = card.ability.extra.Xmult
+      }
     end
-    --[[
-    if context.individual and not context.end_of_round and context.cardarea == G.play and context.scoring_hand and context.scoring_name == "Three of a Kind" then
-        return {
-          x_mult = card.ability.extra.Xmult_multi,
-          card = card
-        }
-    end]]--
+    if context.destroy_card and context.scoring_name == "Three of a Kind" and not context.blueprint
+        and context.cardarea == 'unscored' then
+      return {
+        remove = true
+      }
+    end
     if context.remove_playing_cards and not context.blueprint then
-      for _, removed_card in ipairs(context.removed) do
-        card.ability.extra.Xmult = card.ability.extra.Xmult + card.ability.extra.Xmult_mod
-        card_eval_status_text(card, 'extra', nil, nil, nil, {message = localize("k_upgrade_ex")})
+      for _ = 1, #context.removed do
+        SMODS.scale_card(card, {
+          ref_value = 'Xmult',
+          scalar_value = 'Xmult_mod',
+        })
       end
     end
-  end
+  end,
+  attributes = {"xmult", "hand_type", "destroy_card", "scaling"},
 }
 -- Larvesta 636
 -- Volcarona 637
@@ -143,7 +132,120 @@ local hydreigon={
 -- Frogadier 657
 -- Greninja 658
 -- Bunnelby 659
+local bunnelby = {
+	name = "bunnelby",
+	--pos = {x = 26, y = 43},
+	config = {extra = {num= 1, dem = 2, triggers = 0}, evo_rqmt = 6},
+	loc_vars = function(self, info_queue, card)
+		type_tooltip(self, info_queue, card)
+    info_queue[#info_queue+1] = {set = 'Other', key = 'deplete'}
+		local num, dem = SMODS.get_probability_vars(card, card.ability.extra.num, card.ability.extra.dem, 'bunnelby')
+	  return {vars = {num, dem, math.max(self.config.evo_rqmt - card.ability.extra.triggers, 0)}}
+	end,
+	rarity = 1, --Common
+	cost = 6,
+	stage = "Basic",
+	ptype = "Colorless",
+	gen = 6,
+	designer = "Thor's Girdle",
+	perishable_compat = true,
+	blueprint_compat = true,
+	eternal_compat = true,
+	
+	calculate = function(self, card, context)
+    if context.hand_drawn and SMODS.drawn_cards and not context.blueprint then 
+     if G.deck and G.deck.cards then
+			for i, drawnCard in ipairs(SMODS.drawn_cards) do
+        local findFunc = function(v) return drawnCard:get_id() == v:get_id() end
+				if not SMODS.has_no_rank(drawnCard) and not next(poke_find_playing_card(findFunc)) then
+          if SMODS.pseudorandom_probability(card, 'bunnelby', card.ability.extra.num, card.ability.extra.dem, 'bunnelby') then
+						if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+              card.ability.extra.triggers = card.ability.extra.triggers + 1
+              G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+              G.E_MANAGER:add_event(Event({
+                  func = (function()
+                      SMODS.add_card {
+                          set = 'Tarot',
+                      }
+                      G.GAME.consumeable_buffer = 0
+                      return true
+                  end)
+              }))
+          
+              card_eval_status_text(card, 'extra', nil, nil, nil, {message = localize("k_plus_tarot"), colour = G.C.PURPLE})
+						end
+          else
+            poke_nope(card)
+					end
+				end
+			end
+     end
+   end
+	return scaling_evo (self, card, context, "j_poke_diggersby", card.ability.extra.triggers, self.config.evo_rqmt)
+	end,
+}
 -- Diggersby 660
+local diggersby = {
+	name = "diggersby",
+	--pos = {x = 28, y = 43},
+	config = {extra = {num= 1, dem = 2, mult = 0, mult_mod = 2}},
+	loc_vars = function(self, info_queue, card)
+		type_tooltip(self, info_queue, card)
+    info_queue[#info_queue+1] = {set = 'Other', key = 'deplete'}
+    local num, dem = SMODS.get_probability_vars(card, card.ability.extra.num, card.ability.extra.dem, 'diggersby')
+	  return {vars = {num, dem, card.ability.extra.mult, card.ability.extra.mult_mod}}
+	end,
+	rarity = "poke_safari", 
+	cost = 7,
+	stage = "One",
+	ptype = "Earth",
+	gen = 6,
+	designer = "Thor's Girdle",
+	perishable_compat = true,
+	blueprint_compat = true,
+	eternal_compat = true,
+	calculate = function(self, card, context)
+    if context.hand_drawn and SMODS.drawn_cards and not context.blueprint then 
+     if G.deck and G.deck.cards then
+			for i, drawnCard in ipairs(SMODS.drawn_cards) do 
+        local findFunc = function(v) return drawnCard:get_id() == v:get_id() end
+				if not SMODS.has_no_rank(drawnCard) and not next(poke_find_playing_card(findFunc)) then 
+          if SMODS.pseudorandom_probability(card, 'bunnelby', card.ability.extra.num, card.ability.extra.dem, 'bunnelby') then
+            if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+              G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+              G.E_MANAGER:add_event(Event({
+                  func = (function()
+                      SMODS.add_card {
+                          set = 'Tarot',
+                      }
+                      G.GAME.consumeable_buffer = 0
+                      return true
+                  end)
+              }))
+            
+              card_eval_status_text(card, 'extra', nil, nil, nil, {message = localize("k_plus_tarot"), colour = G.C.PURPLE})
+            end
+            
+            SMODS.scale_card(card, {
+              ref_value = 'mult',
+              scalar_value = 'mult_mod',
+              message_colour = G.C.MULT,
+            })
+          else
+            poke_nope(card)
+          end
+        end
+			end
+     end
+   end
+	 if context.joker_main and card.ability.extra.mult > 0 then
+		return {
+			mult = card.ability.extra.mult
+		}
+	 end
+	end,
+}
+
 return {name = "Pokemon Jokers 631-660", 
-        list = {deino, zweilous, hydreigon},
+        list = {deino, zweilous, hydreigon, bunnelby, diggersby},
 }

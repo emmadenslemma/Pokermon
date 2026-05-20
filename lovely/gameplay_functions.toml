@@ -51,8 +51,7 @@ target = "card.lua"
 pattern = "self.added_to_deck = true"
 position = "after"
 payload = '''
-if self.config.shiny_on_add and not self.debuff then
-  self.config.shiny_on_add = false
+if self.edition and self.edition.poke_shiny then
   SMODS.change_booster_limit(1)
 end
 '''
@@ -64,12 +63,8 @@ target = "card.lua"
 pattern = "self.added_to_deck = false"
 position = "after"
 payload = '''
-if self.edition and self.edition.poke_shiny and G.jokers then
-  if G.GAME.modifiers.poke_booster_packs then
-    G.GAME.modifiers.poke_booster_packs = G.GAME.modifiers.poke_booster_packs - 1
-  else
-    G.GAME.modifiers.poke_booster_packs = 0
-  end
+if self.edition and self.edition.poke_shiny then
+  SMODS.change_booster_limit(-1)
 end
 '''
 match_indent = true
@@ -87,6 +82,27 @@ if _type == 'Joker' and G.GAME.modifiers.apply_type then apply_type_sticker(card
 '''
 match_indent = true
 
+# Elite Stake Functionality
+[[patches]]
+[patches.pattern]
+target = "functions/common_events.lua"
+pattern = '''
+elseif not v.boss.showdown and (v.boss.min <= math.max(1, G.GAME.round_resets.ante) and ((math.max(1, G.GAME.round_resets.ante))%G.GAME.win_ante ~= 0 or G.GAME.round_resets.ante < 2)) then
+    eligible_bosses[k] = res and true or nil
+'''
+position = "before"
+payload = '''
+elseif G.GAME.modifiers.elite4 then
+    if v.boss.showdown and G.GAME.round_resets.ante >= 2 and
+            (G.GAME.round_resets.ante % G.GAME.win_ante >= G.GAME.win_ante - 3 or G.GAME.round_resets.ante % G.GAME.win_ante == 0) then
+        eligible_bosses[k] = res and true
+    elseif not v.boss.showdown and v.boss.min <= math.max(1, G.GAME.round_resets.ante) and
+            (math.max(1, G.GAME.round_resets.ante) % G.GAME.win_ante ~= 0 and not
+            (math.max(1, G.GAME.round_resets.ante) % G.GAME.win_ante >= G.GAME.win_ante - 3) or G.GAME.round_resets.ante < 2) then
+        eligible_bosses[k] = res and true
+    end
+'''
+match_indent = true
 
 ## Foresight / Scry functionality
 # Scry Functionality 1
@@ -207,45 +223,6 @@ payload = '''
         dollars = dollars + tally * G.GAME.modifiers.money_per_enhancement
       end
     end
-'''
-match_indent = true
-
-
-# Hazard Level
-[[patches]]
-[patches.pattern]
-target = "functions/state_events.lua"
-pattern = '''
-    G.E_MANAGER:add_event(Event({
-        trigger = 'before',
-        delay = 0.4,
-        func = function()
-            if #SMODS.drawn_cards > 0 then
-                SMODS.calculate_context({first_hand_drawn = not G.GAME.current_round.any_hand_drawn and G.GAME.facing_blind,
-                                        hand_drawn = G.GAME.facing_blind and SMODS.drawn_cards,
-                                        other_drawn = not G.GAME.facing_blind and SMODS.drawn_cards})
-                SMODS.drawn_cards = {}
-                if G.GAME.facing_blind then G.GAME.current_round.any_hand_drawn = true end
-            end
-            return true
-        end
-    }))
-'''
-position = "after"
-payload = '''
-if not G.GAME.current_round.any_hand_drawn and G.GAME.facing_blind then
-  if G.GAME.round_resets.hazard_level then
-    local hazards = math.min(G.GAME.hazard_max or 3, G.GAME.round_resets.hazard_level)
-    G.E_MANAGER:add_event(Event({
-        trigger = 'before',
-        delay = 0.4,
-        func = function()
-          poke_add_hazards(nil, hazards, G.hand)
-          return true
-        end
-    }))
-  end
-end
 '''
 match_indent = true
 

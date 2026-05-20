@@ -46,7 +46,8 @@ local sylveon={
       local eval = function() return G.GAME.current_round.hands_played == 0 and not G.RESET_JIGGLES end
       juice_card_until(card, eval, true)
     end
-  end
+  end,
+  attributes = {"hands", "modify_card", "editions"},
 }
 -- Hawlucha 701
 -- Dedenne 702
@@ -78,6 +79,7 @@ local pumpkaboo={
   perishable_compat = true,
   blueprint_compat = true,
   eternal_compat = true,
+  poke_custom_values_to_keep = { "jack_target", "jacks_discarded" },
   set_ability = function(self, card, initial, delay_sprites)
     if initial then
       card.ability.extra.form = pseudorandom_element({0, 1, 2, 3}, pseudoseed('pumpkaboo'))
@@ -165,7 +167,8 @@ local pumpkaboo={
   end,
   load = function(self, card, card_table, other_card)
     card.loaded = true
-  end
+  end,
+  attributes = {"discard", "rank", "jack", "spectral", "generation", "item_evo"},
 }
 -- Gourgeist 711
 local gourgeist={
@@ -215,7 +218,7 @@ local gourgeist={
     end
   end,
   set_sprites = function(self, card, front)
-    if poke_can_set_sprite(self) then
+    if poke_can_set_sprite(card) then
       if card.loaded then
         card.loaded = nil
         self:set_ability(card)
@@ -285,7 +288,8 @@ local gourgeist={
   end,
   load = function(self, card, card_table, other_card)
     card.loaded = true
-  end
+  end,
+  attributes = {"discard", "rank", "jack", "spectral", "generation", "economy"},
 }
 -- Bergmite 712
 -- Avalugg 713

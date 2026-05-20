@@ -4,6 +4,16 @@ local zoroark = {
   pos = { x = 7, y = 5 },
   soul_pos = { x = 99, y = 99 },
   config = {extra = {hidden_key = nil}},
+  loc_vars = function(self, info_queue, card)
+    local main_end
+
+    if card.area and card.area == G.jokers then
+      local other_joker = G.jokers.cards[#G.jokers.cards]
+      main_end = poke_blueprint_compat_ui(card ~= other_joker and other_joker)
+    end
+
+    return {main_end = main_end}
+  end,
   rarity = "poke_safari",
   cost = 12,
   stage = "One",
@@ -11,123 +21,70 @@ local zoroark = {
   atlas = "Pokedex5",
   gen = 5,
   blueprint_compat = true,
+  get_illusion = function(self, card)
+    if card.ability and card.ability.extra
+        and card.area ~= G.jokers
+        and not poke_is_in_collection(card) then
+      return G.P_CENTERS[card.ability.extra.hidden_key]
+    end
+  end,
   calculate = function(self, card, context)
     local other_joker = G.jokers.cards[#G.jokers.cards]
-    if other_joker and other_joker ~= card and not context.no_blueprint then
-      context.blueprint = (context.blueprint or 0) + 1
-      context.blueprint_card = context.blueprint_card or card
-      if context.blueprint > #G.jokers.cards + 1 then return end
-
-      local other_joker_ret = Card.calculate_joker(other_joker, context)
-
-      context.blueprint = nil
-      local eff_card = context.blueprint_card or card
-      context.blueprint_card = nil
-      if other_joker_ret then 
-        other_joker_ret.card = eff_card
-        other_joker_ret.colour = G.C.BLACK
-        return other_joker_ret
-      end
+    if other_joker and other_joker ~= card then
+      local ret = SMODS.blueprint_effect(card, other_joker, context)
+      if ret then ret.colour = G.C.BLACK end
+      return ret
     end
   end,
   set_card_type_badge = function(self, card, badges)
-    local card_type = SMODS.Rarity:get_rarity_badge(card.config.center.rarity)
-    local card_type_colour = get_type_colour(card.config.center or card.config, card)
-    if card.area ~= G.jokers and not poke_is_in_collection(card) then
-      local _o = G.P_CENTERS[card.ability.extra.hidden_key]
-      card_type = SMODS.Rarity:get_rarity_badge(_o.rarity)
-      card_type_colour = get_type_colour(_o, card)
-    end
-    badges[#badges + 1] = create_badge(card_type, card_type_colour, nil, 1.2)
+    poke_set_card_type_badge(card, badges, self:get_illusion(card))
   end,
   set_sprites = function(self, card, front)
-    if card.ability and card.ability.extra and card.ability.extra.hidden_key then
-      self:set_ability(card)
+    local center = self:get_illusion(card)
+    if center then
+      card:set_sprites(center)
     end
   end,
   set_ability = function(self, card, initial, delay_sprites)
-    if not type_sticker_applied(card) and not poke_is_in_collection(card) and not G.SETTINGS.paused then
-      apply_type_sticker(card, "Dark")
+    if card.area ~= G.jokers and not poke_is_in_collection(card) then
+      -- Initialize the Illusion
+      if not type_sticker_applied(card) then apply_type_sticker(card, "Dark") end
+      if not card.ability.extra.hidden_key then
+        card.ability.extra.hidden_key = get_random_poke_key_options {
+          key_append = 'zoroark',
+          rarity = 'poke_safari',
+          exclude_types = 'Dark',
+        }
+      end
+
+      self:set_sprites(card)
     end
-    G.E_MANAGER:add_event(Event({
-      func = function()
-        if card.area ~= G.jokers and not poke_is_in_collection(card) and not G.SETTINGS.paused then
-          card.ability.extra.hidden_key = card.ability.extra.hidden_key or get_random_poke_key('zoroark', nil, 'poke_safari', nil, nil, {j_poke_zoroark = true})
-          local _o = G.P_CENTERS[card.ability.extra.hidden_key]
-          card.children.center.atlas = G.ASSET_ATLAS[_o.atlas]
-          card.children.center:set_sprite_pos(_o.pos)
-        else
-          card.children.center.atlas = G.ASSET_ATLAS[self.atlas]
-          card.children.center:set_sprite_pos(self.pos)
-        end
-        return true
-      end }))
+  end,
+  add_to_deck = function(self, card, from_debuff)
+    card.ability.extra.hidden_key = nil
+    poke_reset_sprite(card)
   end,
   generate_ui = function(self, info_queue, card, desc_nodes, specific_vars, full_UI_table)
-    local _c = card and card.config.center or card
-    card.ability.extra.hidden_key = card.ability.extra.hidden_key or get_random_poke_key('zoroark', nil, 'poke_safari', nil, nil, {j_poke_zoroark = true})
-    local _o = G.P_CENTERS[card.ability.extra.hidden_key]
-    if card.area ~= G.jokers and not poke_is_in_collection(card) then
-      local temp_ability = card.ability
-      card.ability = _o.config
-      _o:generate_ui(info_queue, card, desc_nodes, specific_vars, full_UI_table)
-      card.ability = temp_ability
-      if full_UI_table.name[1].nodes[1] then
-        local textDyna = full_UI_table.name[1].nodes[1].nodes[1].config.object
-        textDyna.string = textDyna.string .. localize("poke_illusion")
-        textDyna.config.string = {textDyna.string}
-        textDyna.strings = {}
-        textDyna:update_text(true)
-      end
-      card.children.center.atlas = G.ASSET_ATLAS[_o.atlas]
-      card.children.center:set_sprite_pos(_o.pos)
-      local poketype_list = {Grass = true, Fire = true, Water = true, Lightning = true, Psychic = true, Fighting = true, Colorless = true, Dark = true, Metal = true, Fairy = true, Dragon = true, Earth = true}
-      for i = #info_queue, 1, -1 do
-        if info_queue[i].set == "Other" and info_queue[i].key and poketype_list[info_queue[i].key] then
-          table.remove(info_queue, i)
-        end
-      end
-    else
-      if not full_UI_table.name then
-        full_UI_table.name = localize({ type = "name", set = _c.set, key = _c.key, nodes = full_UI_table.name })
-      end
-      card.ability.blueprint_compat_ui = card.ability.blueprint_compat_ui or ''
-      card.ability.blueprint_compat_check = nil
-      local main_end = (card.area and card.area == G.jokers) and {
-        {n=G.UIT.C, config={align = "bm", minh = 0.4}, nodes={
-          {n=G.UIT.C, config={ref_table = card, align = "m", colour = G.C.JOKER_GREY, r = 0.05, padding = 0.06, func = 'blueprint_compat'}, nodes={
-            {n=G.UIT.T, config={ref_table = card.ability, ref_value = 'blueprint_compat_ui',colour = G.C.UI.TEXT_LIGHT, scale = 0.32*0.8}},
-          }}
-        }}
-      } or nil
-      localize{type = 'descriptions', key = _c.key, set = _c.set, nodes = desc_nodes, vars = {}}
-      desc_nodes[#desc_nodes+1] = main_end
+    local center = self:get_illusion(card)
+    if center then
+      return poke_generate_illusion_ui(center, info_queue, card, desc_nodes, specific_vars, full_UI_table)
     end
+    return SMODS.Center.generate_ui(self, info_queue, card, desc_nodes, specific_vars, full_UI_table)
   end,
   update = function(self, card, dt)
-    if G.STAGE == G.STAGES.RUN and card.area == G.jokers then
+    if G.STAGE == G.STAGES.RUN and card.area and card.area == G.jokers then
       local other_joker = G.jokers.cards[#G.jokers.cards]
-      card.ability.blueprint_compat = ( other_joker and other_joker ~= card and not other_joker.debuff and other_joker.config.center.blueprint_compat and 'compatible') or 'incompatible'
-      if card.ability.blueprint_compat == 'compatible' and not card.debuff and other_joker.children.center.atlas.px == 71 then
-        card.children.center.atlas = other_joker.children.center.atlas
-        card.children.center:set_sprite_pos(other_joker.children.center.sprite_pos)
-        if other_joker.children.floating_sprite then
-          card.children.floating_sprite.atlas = other_joker.children.floating_sprite.atlas
-          card.children.floating_sprite:set_sprite_pos(other_joker.children.floating_sprite.sprite_pos)
-        else
-          card.children.floating_sprite.atlas = G.ASSET_ATLAS[self.atlas]
-          card.children.floating_sprite:set_sprite_pos(self.soul_pos)
-        end
+      if not card.debuff
+          and other_joker.children.center.atlas.px == 71 -- Disables Unown Swarm drawing, because I just couldn't be bothered today.
+          and other_joker and other_joker ~= card
+          and other_joker.config.center.blueprint_compat then
+        poke_copy_joker_sprites(card, other_joker)
       else
-        card.children.center.atlas = G.ASSET_ATLAS[card.edition and card.edition.poke_shiny and "poke_AtlasJokersBasicNatdexShiny" or "poke_AtlasJokersBasicNatdex"]
-        card.children.center:set_sprite_pos(self.pos)
-        card.children.floating_sprite.atlas = G.ASSET_ATLAS[card.edition and card.edition.poke_shiny and "poke_AtlasJokersBasicNatdexShiny" or "poke_AtlasJokersBasicNatdex"]
-        card.children.floating_sprite:set_sprite_pos(self.soul_pos)
+        poke_reset_sprite(card)
       end
-    elseif poke_is_in_collection(card) and card.children.center.sprite_pos ~= self.pos and card.children.center.atlas.name ~= self.atlas then
-      self:set_ability(card)
     end
   end,
+  attributes = {"copying"},
 }
 -- Minccino 572
 -- Cinccino 573
@@ -146,6 +103,7 @@ local gothita={
   ptype = "Psychic",
   atlas = "Pokedex5",
   gen = 5,
+  knockoff_pseudol = true,
   blueprint_compat = false,
   calculate = function(self, card, context)
     return level_evo(self, card, context, "j_poke_gothorita")
@@ -163,7 +121,8 @@ local gothita={
           if v.set_cost then v:set_cost() end
       end
       return true end }))
-  end
+  end,
+  attributes = {"passive", "planet", "economy", "space", "round_evo"},
 }
 -- Gothorita 575
 local gothorita={
@@ -197,7 +156,8 @@ local gothorita={
           if v.set_cost then v:set_cost() end
       end
       return true end }))
-  end
+  end,
+  attributes = {"passive", "planet", "economy", "space", "round_evo"},
 }
 -- Gothitelle 576
 local gothitelle={
@@ -234,6 +194,7 @@ local gothitelle={
       end
       return true end }))
   end,
+  attributes = {"passive", "planet", "economy", "space"},
 }
 -- Solosis 577
 -- Duosion 578
@@ -259,42 +220,37 @@ local vanillite={
   atlas = "Pokedex5",
   gen = 5,
   volatile = true,
-  blueprint_compat = false,
+  blueprint_compat = true,
   eternal_compat = false,
   calculate = function(self, card, context)
-    if context.cardarea == G.jokers and context.scoring_hand and not context.blueprint then
-      if context.joker_main and volatile_active(self, card, card.ability.extra.volatile) then
-        card.ability.extra.triggered = true
+    if context.joker_main and volatile_active(self, card, card.ability.extra.volatile) then
+      card.ability.extra.triggered = true
+      return {
+        chips = card.ability.extra.chips
+      }
+    end
+    if context.after and card.ability.extra.triggered and not context.blueprint then
+      card.ability.extra.triggered = false
+      if card.ability.extra.chips - card.ability.extra.chips_minus <= 0 then
+        SMODS.destroy_cards(card, nil, nil, true)
+
         return {
-          message = localize{type = 'variable', key = 'a_chips', vars = {card.ability.extra.chips}}, 
-          colour = G.C.CHIPS,
-          chip_mod = card.ability.extra.chips
+          message = localize('k_melted_ex'),
+          colour = G.C.CHIPS
         }
-      end
-      if card.ability.extra.triggered and context.after and not context.blueprint then
-        card.ability.extra.triggered = false
-        if card.ability.extra.chips - card.ability.extra.chips_minus <= 0 then 
-            G.E_MANAGER:add_event(Event({
-                func = function()
-                    remove(self, card, context)
-                    return true
-                end
-            })) 
-            return {
-                message = localize('k_melted_ex'),
-                colour = G.C.CHIPS
-            }
-        else
-            card.ability.extra.chips = card.ability.extra.chips - card.ability.extra.chips_minus
-            return {
-                message = localize{type='variable',key='a_chips_minus',vars={card.ability.extra.chips_minus}},
-                colour = G.C.CHIPS
-            }
-        end
+      else
+        SMODS.scale_card(card, {
+          ref_value = "chips",
+          scalar_value = "chips_minus",
+          operation = "-",
+          message_key = 'a_chips_minus',
+          message_colour = G.C.CHIPS,
+        })
       end
     end
     return level_evo(self, card, context, "j_poke_vanillish")
-  end
+  end,
+  attributes = {"chips", "scaling", "food", "volatile", "round_evo"},
 }
 -- Vanillish 583
 local vanillish={
@@ -315,45 +271,37 @@ local vanillish={
   atlas = "Pokedex5",
   gen = 5,
   volatile = true,
-  blueprint_compat = false,
+  blueprint_compat = true,
   eternal_compat = false,
   calculate = function(self, card, context)
-    if context.first_hand_drawn then
-      card.ability.extra.level_up = true
+    if context.joker_main and volatile_active(self, card, card.ability.extra.volatile) then
+      card.ability.extra.triggered = true
+      return {
+        chips = card.ability.extra.chips
+      }
     end
-    if context.cardarea == G.jokers and context.scoring_hand and not context.blueprint then
-      if context.joker_main and volatile_active(self, card, card.ability.extra.volatile) then
-        card.ability.extra.triggered = true
+    if context.after and card.ability.extra.triggered and not context.blueprint then
+      card.ability.extra.triggered = false
+      if card.ability.extra.chips - card.ability.extra.chips_minus <= 0 then
+        SMODS.destroy_cards(card, nil, nil, true)
+
         return {
-          message = localize{type = 'variable', key = 'a_chips', vars = {card.ability.extra.chips}}, 
-          colour = G.C.CHIPS,
-          chip_mod = card.ability.extra.chips
+          message = localize('k_melted_ex'),
+          colour = G.C.CHIPS
         }
-      end
-      if card.ability.extra.triggered and context.after and not context.blueprint then
-        card.ability.extra.triggered = false
-        if card.ability.extra.chips - card.ability.extra.chips_minus <= 0 then 
-            G.E_MANAGER:add_event(Event({
-                func = function()
-                    remove(self, card, context)
-                    return true
-                end
-            })) 
-            return {
-                message = localize('k_melted_ex'),
-                colour = G.C.CHIPS
-            }
-        else
-            card.ability.extra.chips = card.ability.extra.chips - card.ability.extra.chips_minus
-            return {
-                message = localize{type='variable',key='a_chips_minus',vars={card.ability.extra.chips_minus}},
-                colour = G.C.CHIPS
-            }
-        end
+      else
+        SMODS.scale_card(card, {
+          ref_value = "chips",
+          scalar_value = "chips_minus",
+          operation = "-",
+          message_key = 'a_chips_minus',
+          message_colour = G.C.CHIPS,
+        })
       end
     end
     return level_evo(self, card, context, "j_poke_vanilluxe")
-  end
+  end,
+  attributes = {"chips", "scaling", "food", "volatile", "round_evo"},
 }
 -- Vanilluxe 584
 local vanilluxe={
@@ -370,54 +318,47 @@ local vanilluxe={
   ptype = "Water",
   atlas = "Pokedex5",
   gen = 5,
-  blueprint_compat = false,
+  blueprint_compat = true,
   eternal_compat = false,
   calculate = function(self, card, context)
-    if context.cardarea == G.jokers and context.scoring_hand and not context.blueprint then
-      if context.joker_main then
-        return {
-          message = localize{type = 'variable', key = 'a_chips', vars = {card.ability.extra.chips}}, 
-          colour = G.C.CHIPS,
-          chip_mod = card.ability.extra.chips
-        }
-      end
-      if context.after and not context.blueprint then
-        if card.ability.extra.chips - card.ability.extra.chips_minus <= 0 then 
-            G.E_MANAGER:add_event(Event({
-                func = function()
-                    remove(self, card, context)
-                    return true
-                end
-            }))
-            G.E_MANAGER:add_event(Event({
-                func = (function()
-                    play_sound('generic1', 0.9 + math.random()*0.1, 0.8)
-                    play_sound('holo1', 1.2 + math.random()*0.1, 0.4)
-                    return true
-                end)
-              }))
-            for i = 1, card.ability.extra.tags do
-              G.E_MANAGER:add_event(Event({
-                func = (function()
-                    add_tag(Tag('tag_double'))
-                    return true
-                end)
-              }))
+    if context.joker_main and volatile_active(self, card, card.ability.extra.volatile) then
+      card.ability.extra.triggered = true
+      return {
+        chips = card.ability.extra.chips
+      }
+    end
+    if context.after and card.ability.extra.triggered and not context.blueprint then
+      card.ability.extra.triggered = false
+      if card.ability.extra.chips - card.ability.extra.chips_minus <= 0 then
+        SMODS.destroy_cards(card, nil, nil, true)
+
+        G.E_MANAGER:add_event(Event({
+          func = (function()
+            for _ = 1, card.ability.extra.tags do
+              add_tag(Tag('tag_double'))
             end
-            return {
-                message = localize('k_melted_ex'),
-                colour = G.C.CHIPS
-            }
-        else
-            card.ability.extra.chips = card.ability.extra.chips - card.ability.extra.chips_minus
-            return {
-                message = localize{type='variable',key='a_chips_minus',vars={card.ability.extra.chips_minus}},
-                colour = G.C.CHIPS
-            }
-        end
+            play_sound('generic1', 0.9 + math.random() * 0.1, 0.8)
+            play_sound('holo1', 1.2 + math.random() * 0.1, 0.4)
+            return true
+          end)
+        }))
+
+        return {
+          message = localize('k_melted_ex'),
+          colour = G.C.CHIPS
+        }
+      else
+        SMODS.scale_card(card, {
+          ref_value = "chips",
+          scalar_value = "chips_minus",
+          operation = "-",
+          message_key = 'a_chips_minus',
+          message_colour = G.C.CHIPS,
+        })
       end
     end
-  end
+  end,
+  attributes = {"chips", "scaling", "food", "tag", "generation"},
 }
 -- Deerling 585
 -- Sawsbuck 586
@@ -428,94 +369,83 @@ local vanilluxe={
 -- Amoonguss 591
 -- Frillish 592
 local frillish = {
-	name = "frillish", 
-	pos = {x = 0, y = 7},
-	config = {extra = {chips = 0, chip_mod = 2}, evo_rqmt = 60},
-	loc_vars = function(self, info_queue, center)
-		type_tooltip(self, info_queue, center)
-		return {vars = {center.ability.extra.chips, center.ability.extra.chip_mod, self.config.evo_rqmt}}
-	end,
+  name = "frillish",
+  pos = {x = 0, y = 7},
+  config = {extra = {chips = 0, chip_mod = 2}, evo_rqmt = 60},
+  loc_vars = function(self, info_queue, center)
+    type_tooltip(self, info_queue, center)
+    return {vars = {center.ability.extra.chips, center.ability.extra.chip_mod, self.config.evo_rqmt}}
+  end,
   designer = "Hwang2760",
-	rarity = 2,
-	cost = 7,
-	stage = "Basic", 
-	ptype = "Water",
-	atlas = "Pokedex5",
-	gen = 5,
-	blueprint_compat = true,
-	perishable_compat = false,
-	calculate = function(self, card, context)
-		if context.cardarea == G.jokers then
-			if context.discard and not context.blueprint then
-				if context.other_card:is_face() then
-					card.ability.extra.chips = card.ability.extra.chips + card.ability.extra.chip_mod
-					return {
-						message = localize('k_upgrade_ex'),
-						colour = G.C.CHIPS,
-						delay = 0.45,
-					}
-				end
-			end
-
-			if context.scoring_hand and context.joker_main and card.ability.extra.chips > 0 then
-				return {
-					message = localize{type = 'variable', key = 'a_chips', vars = {card.ability.extra.chips}}, 
-					colour = G.C.CHIPS,
-					chip_mod = card.ability.extra.chips
-				}
-			end
-		end
-		return scaling_evo(self, card, context, "j_poke_jellicent", card.ability.extra.chips, self.config.evo_rqmt)
-	end,
+  rarity = 2,
+  cost = 7,
+  stage = "Basic",
+  ptype = "Water",
+  atlas = "Pokedex5",
+  gen = 5,
+  blueprint_compat = true,
+  perishable_compat = false,
+  calculate = function(self, card, context)
+    if context.discard and not context.blueprint
+        and context.other_card:is_face() then
+      SMODS.scale_card(card, {
+        ref_value = 'chips',
+        scalar_value = 'chip_mod',
+        message_colour = G.C.CHIPS,
+        message_delay = 0.45
+      })
+    end
+    if context.joker_main then
+      return {
+        chips = card.ability.extra.chips
+      }
+    end
+    return scaling_evo(self, card, context, "j_poke_jellicent", card.ability.extra.chips, self.config.evo_rqmt)
+  end,
+  attributes = {"chips", "scaling", "discard", "face", "scaling_evo"},
 }
 
 -- Jellicent 593
 local jellicent = {
-	name = "jellicent", 
-	pos = {x = 1, y = 7},
-	config = {extra = {chips = 60, chip_mod = 4}},
-	loc_vars = function(self, info_queue, center)
-		type_tooltip(self, info_queue, center)
-		return {vars = {center.ability.extra.chips, center.ability.extra.chip_mod}}
-	end,
+  name = "jellicent",
+  pos = {x = 1, y = 7},
+  config = {extra = {chips = 60, chip_mod = 4}},
+  loc_vars = function(self, info_queue, center)
+    type_tooltip(self, info_queue, center)
+    return {vars = {center.ability.extra.chips, center.ability.extra.chip_mod}}
+  end,
   designer = "Hwang2760",
-	rarity = "poke_safari", 
-	cost = 10,
-	stage = "One", 
-	ptype = "Water",
-	atlas = "Pokedex5",
-	gen = 5,
-	blueprint_compat = true,
-	perishable_compat = false,
-	calculate = function(self, card, context)
-		if context.cardarea == G.jokers then
-			if context.discard and not context.blueprint then
-				if context.other_card:is_face() then
-					local card_id = context.other_card:get_id() 
+  rarity = "poke_safari",
+  cost = 10,
+  stage = "One",
+  ptype = "Water",
+  atlas = "Pokedex5",
+  gen = 5,
+  blueprint_compat = true,
+  perishable_compat = false,
+  calculate = function(self, card, context)
+    if context.discard and not context.blueprint
+        and context.other_card:is_face() then
+      local card_id = context.other_card:get_id()
 
-					if card_id == 12 or card_id == 13 then
-						card.ability.extra.chips = card.ability.extra.chips + (card.ability.extra.chip_mod * 2)
-					else
-						card.ability.extra.chips = card.ability.extra.chips + card.ability.extra.chip_mod
-					end
-
-					return {
-						message = localize('k_upgrade_ex'),
-						colour = G.C.CHIPS,
-						delay = 0.45,
-					}
-				end
-			end
-
-			if context.scoring_hand and context.joker_main then
-				return {
-					message = localize{type = 'variable', key = 'a_chips', vars = {card.ability.extra.chips}}, 
-					colour = G.C.CHIPS,
-					chip_mod = card.ability.extra.chips
-				}
-			end
-		end
+      SMODS.scale_card(card, {
+        ref_value = 'chips',
+        scalar_value = 'chip_mod',
+        operation = function(ref_table, ref_value, initial, modifier)
+          local multi = (card_id == 12 or card_id == 13) and 2 or 1
+          ref_table[ref_value] = initial + modifier * multi
+        end,
+        message_colour = G.C.CHIPS,
+        message_delay = 0.45
+      })
+    end
+    if context.joker_main then
+      return {
+        chips = card.ability.extra.chips
+      }
+    end
 	end,
+  attributes = {"chips", "scaling", "discard", "face", "rank", "king", "queen"},
 }
 -- Alomomola 594
 -- Joltik 595
@@ -557,7 +487,8 @@ local ferroseed={
   end,
   remove_from_deck = function(self, card, from_debuff)
     poke_change_hazard_level(-card.ability.extra.hazard_level)
-  end
+  end,
+  attributes = {"hazards", "passive", "modify_card", "enhancements", "round_evo"},
 }
 -- Ferrothorn 598
 local ferrothorn={
@@ -611,7 +542,8 @@ local ferrothorn={
   end,
   remove_from_deck = function(self, card, from_debuff)
     poke_change_hazard_level(-card.ability.extra.hazard_level)
-  end
+  end,
+  attributes = {"hazards", "passive", "modify_card", "enhancements", "hand_type", "retrigger"},
 }
 -- Klink 599
 -- Klang 600

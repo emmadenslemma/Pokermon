@@ -315,22 +315,7 @@ local moonstone = {
         local hand = G.FUNCS.get_poker_hand_info(G.hand.highlighted)
         SMODS.smart_level_up_hand(card, hand)
       else
-        G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
-            attention_text({
-                text = localize('k_nope_ex'),
-                scale = 1.3, 
-                hold = 1.4,
-                major = card,
-                backdrop_colour = G.C.SECONDARY_SET.Tarot,
-                align = (G.STATE == G.STATES.TAROT_PACK or G.STATE == G.STATES.SPECTRAL_PACK) and 'tm' or 'cm',
-                offset = {x = 0, y = (G.STATE == G.STATES.TAROT_PACK or G.STATE == G.STATES.SPECTRAL_PACK) and -0.2 or 0},
-                silent = true
-                })
-                G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.06*G.SETTINGS.GAMESPEED, blockable = false, blocking = false, func = function()
-                    play_sound('tarot2', 0.76, 0.4);return true end}))
-                play_sound('tarot2', 1, 0.4)
-                card:juice_up(0.3, 0.5)
-        return true end }))
+        poke_nope(card)
       end
       poke_unhighlight_cards()
       evo_item_use_total(self, card, area, copier)
@@ -756,7 +741,7 @@ local dragonscale = {
     for i = 1, 3 do
       if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
         local card_type = nil
-        if pseudorandom(pseudoseed('dragonscale')) > .50 then
+        if pseudorandom(pseudoseed('dragonscale')) > .50 or G.GAME.modifiers.no_energy then
           card_type = "Item"
         else
           card_type = "Energy"

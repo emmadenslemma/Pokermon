@@ -162,30 +162,24 @@ poke_add_shop_card = function(add_card, card)
 end
 
 poke_remove_card = function(target, card, trigger)
-      if target.ability.name == 'Glass Card' then 
-          target.shattered = true
-      else 
-          target.destroyed = true
-      end 
-      G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
-        play_sound('tarot1')
-        card:juice_up(0.3, 0.5)
-        return true end }))
-      G.E_MANAGER:add_event(Event({
-          trigger = trigger and trigger or 'after',
-          delay = 0.2,
-          func = function() 
-              if target.ability.name == 'Glass Card' then 
-                  target:shatter()
-              else
-                  target:start_dissolve()
-              end
-          return true end }))
-      delay(0.3)
-      for i = 1, #G.jokers.cards do
-          G.jokers.cards[i]:calculate_joker({remove_playing_cards = true, removed = {target}})
-      end
-      card:juice_up()
+  G.E_MANAGER:add_event(Event({
+    trigger = 'after',
+    delay = 0.4,
+    func = function()
+      play_sound('tarot1')
+      card:juice_up(0.3, 0.5)
+      return true
+    end
+  }))
+  G.E_MANAGER:add_event(Event({
+    trigger = trigger and trigger or 'after',
+    delay = 0.2,
+    func = function()
+      SMODS.destroy_cards(target, nil, true)
+      return true
+    end
+  }))
+  delay(0.3)
 end
 
 poke_debug = function(message, verbose, depth)
@@ -220,6 +214,18 @@ function poke_find_card(key_or_function, use_highlighted)
   end
 end
 
+function poke_find_playing_card(findFunc, findArea)
+  local area = findArea or G.deck.cards
+  local found = {}
+  for k, v in pairs(area) do
+    if findFunc(v) then
+      found[#found + 1] = v
+    end
+  end
+  
+  return found
+end
+
 function poke_find_leftmost_or_highlighted(key_or_function)
   if not key_or_function then
     return G.jokers.highlighted[1] or G.jokers.cards[1]
@@ -233,39 +239,11 @@ poke_vary_rank = function(card, decrease, seed, immediate)
 
   local next_rank = nil
   if decrease == nil then
-    -- randomize rank (decrease is nil)
-    local poss_ranks = {}
-    for _, v in pairs(G.P_CARDS) do
-      if v.suit == card.base.suit then
-        table.insert(poss_ranks, v.value)
-      end
-    end
-    if #poss_ranks > 0 then
-      next_rank = pseudorandom_element(poss_ranks, pseudoseed(seed or 'random_rank'))
-    end
+    next_rank = pseudorandom_element(SMODS.Ranks, pseudoseed(seed or 'random_rank')).key
   elseif decrease then
-    -- only need to do this due to prev being a bad table (should be fixed in the next update)
-    local poss_ranks = {}
-    for _, v in pairs(SMODS.Ranks[card.base.value].prev) do
-      if SMODS.Ranks[v] and type(SMODS.Ranks[v].next) == "table" then
-        for _, _r in pairs(SMODS.Ranks[v].next) do
-          if _r == card.base.value then
-            table.insert(poss_ranks, v)
-            break
-          end
-        end
-      end
-    end
-    if #poss_ranks > 0 then
-      next_rank = pseudorandom_element(poss_ranks, pseudoseed(seed or 'decrease_rank'))
-    end
-
-    -- once prev table is fixed can use this:
-    --[[
     if #SMODS.Ranks[card.base.value].prev > 0 then
       next_rank = pseudorandom_element(SMODS.Ranks[card.base.value].prev, pseudoseed(seed or 'decrease_rank'))
     end
-    --]]
   else
     if #SMODS.Ranks[card.base.value].next > 0 then
       next_rank = pseudorandom_element(SMODS.Ranks[card.base.value].next, pseudoseed(seed or 'increase_rank'))
@@ -471,7 +449,8 @@ function Game:init_game_object()
 end
 
 poke_is_in_collection = function(card)
-  if not card.area then return true end
+  if not card.area and G.OVERLAY_MENU then return true end
+  if card.area and card.area.config.collection then return true end
   if G.your_collection then
     for k, v in pairs(G.your_collection) do
       if card.area == v then
@@ -661,13 +640,6 @@ end
 -- Smeared Check Hook
 local smeared_ref = SMODS.smeared_check
 function SMODS.smeared_check(card, suit)
-  if next(SMODS.find_card('j_poke_smeargle')) then
-    if (card.base.suit == 'Hearts' or card.base.suit == 'Diamonds') and (suit == 'Hearts' or suit == 'Diamonds') then
-      return true
-    elseif (card.base.suit == 'Spades' or card.base.suit == 'Clubs') and (suit == 'Spades' or suit == 'Clubs') then
-      return true
-    end
-  end
   return smeared_ref(card, suit)
 end
 
@@ -753,13 +725,180 @@ poke_convert_to_set = function(element_or_list)
   if element_or_list then
     local set
     if type(element_or_list) == 'table' then
-      for _, v in ipairs(element_or_list) do
+      for k, v in pairs(element_or_list) do
         set = set or {}
-        set[v] = true
+local key = v == true and k or v
+        set[key] = true
       end
     else
       set = { [element_or_list] = true }
     end
     return set
   end
+end
+
+poke_get_consumeables = function(set)
+  local consumeables = {}
+  if G.STAGE ~= G.STAGES.RUN then return consumeables end
+  local count = 0
+  local areas = {G.jokers.cards, G.consumeables.cards}
+  for i = 1, #areas do
+    local area = areas[i]
+    for j = 1, #area do
+      if area[j].ability.consumeable and not (set and area[j].ability.set ~= set) then
+        consumeables[#consumeables + 1] = area[j]
+      end
+    end
+  end
+  return consumeables
+end
+
+poke_ease_hands_played = function(mod, instant)
+  if mod >= 0 then
+    ease_hands_played(mod, instant)
+  else
+    local to_decrease = math.min(G.GAME.current_round.hands_left + (G.poke_hands_buffer or 0) - 1, -mod)
+    if to_decrease > 0 then
+      ease_hands_played(-to_decrease, instant)
+    end
+  end
+end
+
+local ease_hands_played_ref = ease_hands_played
+ease_hands_played = function(mod, instant, ...)
+  if not instant then
+    G.poke_hands_buffer = (G.poke_hands_buffer or 0) + mod
+    G.E_MANAGER:add_event(Event({
+      func = function()
+        G.poke_hands_buffer = 0
+        return true
+      end
+    }))
+  end
+  return ease_hands_played_ref(mod, instant, ...)
+end
+
+poke_nope = function(card)
+  G.E_MANAGER:add_event(Event({
+    trigger = 'after',
+    delay = 0.4,
+    func = function()
+        attention_text({
+            text = localize('k_nope_ex'),
+            scale = 1.3,
+            hold = 1.4,
+            major = card,
+            backdrop_colour = G.C.SECONDARY_SET.Tarot,
+            align = (G.STATE == G.STATES.TAROT_PACK or G.STATE == G.STATES.SPECTRAL_PACK or G.STATE == G.STATES.SMODS_BOOSTER_OPENED) and
+                'tm' or 'cm',
+            offset = { x = 0, y = (G.STATE == G.STATES.TAROT_PACK or G.STATE == G.STATES.SPECTRAL_PACK or G.STATE == G.STATES.SMODS_BOOSTER_OPENED) and -0.2 or 0 },
+            silent = true
+        })
+        G.E_MANAGER:add_event(Event({
+            trigger = 'after',
+            delay = 0.06 * G.SETTINGS.GAMESPEED,
+            blockable = false,
+            blocking = false,
+            func = function()
+                play_sound('tarot2', 0.76, 0.4)
+                return true
+            end
+        }))
+        play_sound('tarot2', 1, 0.4)
+        card:juice_up(0.3, 0.5)
+        return true
+    end
+            }))
+end
+
+-- Utils for sprite manipulation on existing cards
+
+--- Checks whether two sprites are equal.
+--- Also accepts card centers (uses `atlas` and `pos`)
+poke_compare_sprites = function(a, b)
+  a = a or {}
+  b = b or {}
+  local a_atlas = type(a.atlas) == 'table' and a.atlas.name or a.atlas
+  local b_atlas = type(b.atlas) == 'table' and b.atlas.name or b.atlas
+  local a_pos = a.sprite_pos or a.pos or {}
+  local b_pos = b.sprite_pos or b.pos or {}
+  return a_atlas == b_atlas and a_pos.x == b_pos.x and a_pos.y == b_pos.y
+end
+
+--- Copies the sprite at `from.children[sprite_index]` to `card.children[sprite_index]`
+poke_copy_sprite = function(card, from, sprite_index)
+  if poke_compare_sprites(card.children[sprite_index], from.children[sprite_index]) then
+    return
+  end
+
+  if card.children[sprite_index] then
+    card.children[sprite_index]:remove()
+    card.children[sprite_index] = nil
+  end
+
+  if not from.children[sprite_index] then return end
+
+  local sprite = from.children[sprite_index]
+  local copy = SMODS.create_sprite(card.T.x, card.T.y, card.T.w, card.T.h, sprite.atlas.name, sprite.sprite_pos)
+
+  for k, v in pairs(sprite.states) do
+    if v == from.states[k] then
+      copy.states[k] = card.states[k]
+    elseif not v.can then
+      copy.states[k].can = false
+    end
+  end
+
+  for k, v in pairs(sprite.role) do
+    if v == from then
+      copy.role[k] = card
+    else
+      copy.role[k] = v
+    end
+  end
+
+  card.children[sprite_index] = copy
+end
+
+poke_copy_joker_sprites = function(card, from)
+  poke_copy_sprite(card, from, 'center')
+  poke_copy_sprite(card, from, 'floating_sprite')
+end
+
+--- Resets the card back to its original sprite, while keeping states/roles intact
+poke_reset_sprite = function(card, center)
+  center = center or card.config.center
+
+  local sprite = card.children.center
+  local soul = card.children.floating_sprite
+
+  if poke_compare_sprites(sprite, center) then return end
+
+  card.children.center = nil
+  card.children.floating_sprite = nil
+
+  local new_center = SMODS.create_sprite(card.T.x, card.T.y, card.T.w, card.T.h, center.atlas, center.pos)
+
+  new_center.states = sprite.states
+  new_center.role = sprite.role
+
+  card.children.center = new_center
+
+  if center.soul_pos then
+    local new_soul = SMODS.create_sprite(card.T.x, card.T.y, card.T.w, card.T.h, center.soul_atlas or center.atlas, center.soul_pos)
+
+    if soul then
+      new_soul.states = soul.states
+      new_soul.role = soul.role
+    else
+      new_soul.role.draw_major = card
+      new_soul.states.hover.can = false
+      new_soul.states.click.can = false
+    end
+
+    card.children.floating_sprite = new_soul
+  end
+
+  if sprite then sprite:remove() end
+  if soul then soul:remove() end
 end

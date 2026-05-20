@@ -89,9 +89,9 @@ end
 increment_energy = function(card, etype, amount, silent)
   if not amount then amount = 1 end
   -- checking if the colorless penalty applies
-  local c_penalty = (not G.GAME.modifiers.disable_colorless_penalty and not is_type(card, "Colorless") and etype == "Colorless")
+  local c_penalty = (not G.GAME.modifiers.disable_colorless_penalty and not is_type(card, "Colorless") and etype == "Colorless") and 2 or 1
   -- the regular energy increment
-  if (energy_matches(card, etype, c_penalty and false or true)) then
+  if (energy_matches(card, etype, false)) then
     if card.ability.extra and type(card.ability.extra) == "table" then
       card.ability.extra.energy_count = card.ability.extra.energy_count and (card.ability.extra.energy_count + amount) or amount
       energize(card, etype, false, silent, amount)
@@ -287,16 +287,6 @@ ease_poke_dollars = function(card, seed, amt, calc_only)
   if card.ability.extra and type(card.ability.extra) == "table" then
     if card.ability.money_frac then
       if card.ability.money_frac > pseudorandom(pseudoseed(seed)) then
-        earned = earned + 1
-      end
-    end
-    if card.ability.money1_frac then
-      if card.ability.money1_frac > pseudorandom(pseudoseed(seed)) then
-        earned = earned + 1
-      end
-    end
-    if card.ability.money2_frac then
-      if card.ability.money2_frac > pseudorandom(pseudoseed(seed)) then
         earned = earned + 1
       end
     end

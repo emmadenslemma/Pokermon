@@ -25,35 +25,15 @@ local poliwhirl={
   gen = 1,
   blueprint_compat = true,
   calculate = function(self, card, context)
-    if context.cardarea == G.jokers and context.scoring_hand then
-      if context.joker_main then
-        if not context.blueprint then
-          poke_change_poli_suit()
-          G.GAME.poke_poli_suit_change_triggered = true
-        end
-      end
-      if context.after and G.GAME.poke_poli_suit_change_triggered then
-        G.GAME.poke_poli_suit_change_triggered = false
-      end
-    end
-    if context.individual and not context.end_of_round and context.cardarea == G.play then
-      local scoring_suit = G.GAME.poke_poli_suit or "Spades"
-      if context.other_card:is_suit(scoring_suit) then
-        if context.other_card.debuff then
-          return {
-            message = localize("k_debuffed"),
-            colour = G.C.RED,
-            card = card,
-          }
-        else
-          return {
-            mult = card.ability.extra.mult
-          }
-        end
-      end
+    if context.individual and context.cardarea == G.play
+        and context.other_card:is_suit(G.GAME.poke_poli_suit or "Spades") then
+      return {
+        mult = card.ability.extra.mult,
+      }
     end
     return item_evo(self, card, context)
   end,
+  attributes = {"mult", "suit", "item_evo"},
 }
 -- Poliwrath 062
 local poliwrath={
@@ -74,36 +54,15 @@ local poliwrath={
   gen = 1,
   blueprint_compat = true,
   calculate = function(self, card, context)
-    if context.cardarea == G.jokers and context.scoring_hand then
-      if context.joker_main then
-        if not context.blueprint then
-          poke_change_poli_suit()
-          G.GAME.poke_poli_suit_change_triggered = true
-        end
-      end
-      if context.after and G.GAME.poke_poli_suit_change_triggered then
-        G.GAME.poke_poli_suit_change_triggered = false
-      end
-    end
-    if context.individual and not context.end_of_round and context.cardarea == G.play then
-      local scoring_suit = G.GAME.poke_poli_suit or "Spades"
-      if context.other_card:is_suit(scoring_suit) then
-        if context.other_card.debuff then
-          return {
-            message = localize("k_debuffed"),
-            colour = G.C.RED,
-            card = card,
-          }
-        else
-          return {
-            x_mult = card.ability.extra.Xmult_multi,
-            mult = card.ability.extra.mult,
-            card = card
-          }
-        end
-      end
+    if context.individual and context.cardarea == G.play
+        and context.other_card:is_suit(G.GAME.poke_poli_suit or "Spades") then
+      return {
+        x_mult = card.ability.extra.Xmult_multi,
+        mult = card.ability.extra.mult,
+      }
     end
   end,
+  attributes = {"mult", "xmult", "suit"},
 }
 -- Abra 063
 local abra={
@@ -149,6 +108,7 @@ local abra={
     end
     return level_evo(self, card, context, "j_poke_kadabra")
   end,
+  attributes = {"chance", "tarot", "item", "hand_type", "round_evo"},
 }
 -- Kadabra 064
 local kadabra={
@@ -201,6 +161,7 @@ local kadabra={
     end
     return item_evo(self, card, context, "j_poke_alakazam")
   end,
+  attributes = {"chance", "tarot", "item", "hand_type", "item_evo"},
 }
 -- Alakazam 065
 local alakazam={
@@ -253,12 +214,19 @@ local alakazam={
     end
   end,
   add_to_deck = function(self, card, from_debuff)
-    G.consumeables.config.card_limit = G.consumeables.config.card_limit + card.ability.extra.card_limit
+    local limit = card.ability.extra.card_limit
+    G.E_MANAGER:add_event(Event({
+        func = function()
+            G.consumeables.config.card_limit = G.consumeables.config.card_limit + limit
+            return true
+        end
+    }))
   end,
   remove_from_deck = function(self, card, from_debuff)
     G.consumeables.config.card_limit = G.consumeables.config.card_limit - card.ability.extra.card_limit
   end, 
-  megas = {"mega_alakazam"}
+  megas = {"mega_alakazam"},
+  attributes = {"passive", "chance", "tarot", "item", "hand_type"},
 }
 -- Mega Alakazam 065-1
 local mega_alakazam={
@@ -296,11 +264,24 @@ local mega_alakazam={
     end
   end,
   add_to_deck = function(self, card, from_debuff)
-    G.consumeables.config.card_limit = G.consumeables.config.card_limit + card.ability.extra.card_limit
+    local limit = card.ability.extra.card_limit
+    G.E_MANAGER:add_event(Event({
+        func = function()
+            G.consumeables.config.card_limit = G.consumeables.config.card_limit + limit
+            return true
+        end
+    }))
   end,
   remove_from_deck = function(self, card, from_debuff)
-    G.consumeables.config.card_limit = G.consumeables.config.card_limit - card.ability.extra.card_limit
-  end, 
+    local limit = card.ability.extra.card_limit
+    G.E_MANAGER:add_event(Event({
+        func = function()
+            G.consumeables.config.card_limit = G.consumeables.config.card_limit - limit
+            return true
+        end
+    }))
+  end,
+  attributes = {"passive", "xmult", "item"},
 }
 -- Machop 066
 local machop={
@@ -341,12 +322,10 @@ local machop={
   remove_from_deck = function(self, card, from_debuff)
     G.GAME.round_resets.hands = G.GAME.round_resets.hands - card.ability.extra.hands
     G.GAME.round_resets.discards = G.GAME.round_resets.discards + card.ability.extra.discards
-    local to_decrease = math.min(G.GAME.current_round.hands_left - 1, card.ability.extra.hands)
-    if to_decrease > 0 then
-      ease_hands_played(-to_decrease)
-    end
+    poke_ease_hands_played(-card.ability.extra.hands)
     ease_discard(card.ability.extra.discards)
-  end
+  end,
+  attributes = {"mult", "passive", "hands", "discard", "round_evo"},
 }
 -- Machoke 067
 local machoke={
@@ -391,12 +370,10 @@ local machoke={
   remove_from_deck = function(self, card, from_debuff)
     G.GAME.round_resets.hands = G.GAME.round_resets.hands - card.ability.extra.hands
     G.GAME.round_resets.discards = G.GAME.round_resets.discards + card.ability.extra.discards
-    local to_decrease = math.min(G.GAME.current_round.hands_left - 1, card.ability.extra.hands)
-    if to_decrease > 0 then
-      ease_hands_played(-to_decrease)
-    end
+    poke_ease_hands_played(-card.ability.extra.hands)
     ease_discard(card.ability.extra.discards)
-  end
+  end,
+  attributes = {"mult", "passive", "hands", "discard", "item_evo"},
 }
 -- Machamp 068
 local machamp={
@@ -436,12 +413,10 @@ local machamp={
   remove_from_deck = function(self, card, from_debuff)
     G.GAME.round_resets.hands = G.GAME.round_resets.hands - card.ability.extra.hands
     G.GAME.round_resets.discards = G.GAME.round_resets.discards + card.ability.extra.discards
-    local to_decrease = math.min(G.GAME.current_round.hands_left - 1, card.ability.extra.hands)
-    if to_decrease > 0 then
-      ease_hands_played(-to_decrease)
-    end
+    poke_ease_hands_played(-card.ability.extra.hands)
     ease_discard(card.ability.extra.discards)
-  end
+  end,
+  attributes = {"mult", "passive", "hands", "discard"},
 }
 -- Bellsprout 069
 local bellsprout={
@@ -458,6 +433,7 @@ local bellsprout={
   ptype = "Grass",
   atlas = "Pokedex1",
   gen = 1,
+  knockoff_starter = true,
   blueprint_compat = true,
   calculate = function(self, card, context)
     if context.individual and context.cardarea == G.play and not context.other_card.debuff then
@@ -469,7 +445,8 @@ local bellsprout={
       end
     end
     return level_evo(self, card, context, "j_poke_weepinbell")
-  end
+  end,
+  attributes = {"chips", "rank", "two", "four", "six", "eight", "ten", "round_evo"},
 }
 -- Weepinbell 070
 local weepinbell={
@@ -501,7 +478,8 @@ local weepinbell={
       end
     end
     return item_evo(self, card, context, "j_poke_victreebel")
-  end
+  end,
+  attributes = {"chips", "rank", "two", "four", "six", "eight", "ten", "item_evo"},
 }
 -- Victreebel 071
 local victreebel={
@@ -549,6 +527,7 @@ local victreebel={
     end
   end,
   --megas = { "mega_victreebel" },
+  attributes = {"chips", "rank", "two", "four", "six", "eight", "ten", "retrigger"},
 }
 
 -- Tentacool 072
@@ -575,7 +554,8 @@ local tentacool={
       }
     end
     return level_evo(self, card, context, "j_poke_tentacruel")
-  end
+  end,
+  attributes = {"mult", "rank", "ten", "round_evo"},
 }
 -- Tentacruel 073
 local tentacruel={
@@ -600,7 +580,8 @@ local tentacruel={
         card = card
       }
     end
-  end
+  end,
+  attributes = {"mult", "rank", "ten"},
 }
 -- Geodude 074
 local geodude={
@@ -635,7 +616,8 @@ local geodude={
   end,
   remove_from_deck = function(self, card, from_debuff)
     G.hand:change_size(card.ability.extra.h_size)
-  end
+  end,
+  attributes = {"chips", "hand_size", "round_evo"},
 }
 -- Graveler 075
 local graveler={
@@ -674,7 +656,8 @@ local graveler={
   end,
   remove_from_deck = function(self, card, from_debuff)
     G.hand:change_size(card.ability.extra.h_size)
-  end
+  end,
+  attributes = {"chips", "hand_size", "item_evo"},
 }
 -- Golem 076
 local golem={
@@ -708,7 +691,8 @@ local golem={
   end,
   remove_from_deck = function(self, card, from_debuff)
     G.hand:change_size(card.ability.extra.h_size)
-  end
+  end,
+  attributes = {"chips", "hand_size"},
 }
 -- Ponyta 077
 local ponyta={
@@ -725,28 +709,25 @@ local ponyta={
   ptype = "Fire",
   atlas = "Pokedex1",
   gen = 1, 
+  knockoff_starter = true,
   perishable_compat = false,
   blueprint_compat = true,
   calculate = function(self, card, context)
-    if context.cardarea == G.jokers and context.scoring_hand then
-      if context.before and not context.blueprint and context.cardarea == G.jokers and next(context.poker_hands['Straight']) then
-        card.ability.extra.chips = card.ability.extra.chips + card.ability.extra.chip_mod
-        return {
-            message = localize('k_upgrade_ex'),
-            colour = G.C.CHIPS,
-            card = card
-        }
-      end
-      if context.joker_main and card.ability.extra.chips > 0 then
-        return {
-          message = localize{type = 'variable', key = 'a_chips', vars = {card.ability.extra.chips}}, 
-          colour = G.C.CHIPS,
-          chip_mod = card.ability.extra.chips
-        }
-      end
+    if context.before and not context.blueprint and next(context.poker_hands['Straight']) then
+      SMODS.scale_card(card, {
+        ref_value = 'chips',
+        scalar_value = 'chip_mod',
+        message_colour = G.C.CHIPS,
+      })
+    end
+    if context.joker_main then
+      return {
+        chips = card.ability.extra.chips
+      }
     end
     return scaling_evo(self, card, context, "j_poke_rapidash", card.ability.extra.chips, self.config.evo_rqmt)
   end,
+  attributes = {"chips", "hand_type", "scaling", "scaling_evo"},
 }
 -- Rapidash 078
 local rapidash={
@@ -766,25 +747,21 @@ local rapidash={
   perishable_compat = false,
   blueprint_compat = true,
   calculate = function(self, card, context)
-    if context.cardarea == G.jokers and context.scoring_hand then
-      if context.before and not context.blueprint and context.cardarea == G.jokers and next(context.poker_hands['Straight']) then
-        card.ability.extra.chips = card.ability.extra.chips + card.ability.extra.chip_mod
-        card.ability.extra.chip_mod = card.ability.extra.chip_mod + 1
-        return {
-            message = localize('k_upgrade_ex'),
-            colour = G.C.CHIPS,
-            card = card
-        }
-      end
-      if context.joker_main and card.ability.extra.chips > 0 then
-        return {
-          message = localize{type = 'variable', key = 'a_chips', vars = {card.ability.extra.chips}}, 
-          colour = G.C.CHIPS,
-          chip_mod = card.ability.extra.chips
-        }
-      end
+    if context.before and not context.blueprint and next(context.poker_hands['Straight']) then
+      SMODS.scale_card(card, {
+        ref_value = 'chips',
+        scalar_value = 'chip_mod',
+        message_colour = G.C.CHIPS,
+      })
+      card.ability.extra.chip_mod = card.ability.extra.chip_mod + 1
+    end
+    if context.joker_main then
+      return {
+        chips = card.ability.extra.chips
+      }
     end
   end,
+  attributes = {"chips", "hand_type", "scaling"},
 }
 -- Slowpoke 079
 local slowpoke={
@@ -804,6 +781,7 @@ local slowpoke={
   ptype = "Water",
   atlas = "Pokedex1",
   gen = 1, 
+  knockoff_starter = true,
   blueprint_compat = true,
   calculate = function(self, card, context)
     if context.cardarea == G.jokers and context.scoring_hand then
@@ -834,7 +812,8 @@ local slowpoke={
       evo = scaling_evo(self, card, context, "j_poke_slowbro", card.ability.extra.shell_used, 1)
     end
     return evo
-  end
+  end,
+  attributes = {"xmult", "hands", "trigger_evo", "item_evo"},
 }
 -- Slowbro 080
 local slowbro={
@@ -873,7 +852,8 @@ local slowbro={
       }
     end
   end,
-  megas = {"mega_slowbro"}
+  megas = {"mega_slowbro"},
+  attributes = {"xmult", "hands", "scaling", "reset"},
 }
 -- Mega Slowbro 080-1
 local mega_slowbro={
@@ -895,17 +875,15 @@ local mega_slowbro={
   gen = 1,
   blueprint_compat = true,
   calculate = function(self, card, context)
-    if context.cardarea == G.jokers and context.scoring_hand then
-      if context.joker_main then
-        card.ability.extra.hands_played = card.ability.extra.hands_played + 1
-        local xmult_total = card.ability.extra.Xmult + (card.ability.extra.hands_played * card.ability.extra.Xmult_mod)
-        return {
-          message = localize{type = 'variable', key = 'a_xmult', vars = {xmult_total}}, 
-          colour = G.C.XMULT,
-          Xmult_mod = xmult_total
-        }
-      end
-    elseif (context.end_of_round and G.GAME.blind.boss) and not context.repetition and not context.individual and not context.blueprint then
+    if context.before then
+      card.ability.extra.hands_played = card.ability.extra.hands_played + 1
+    end
+    if context.joker_main then
+      return {
+        Xmult = card.ability.extra.Xmult + card.ability.extra.hands_played * card.ability.extra.Xmult_mod
+      }
+    end
+    if context.end_of_round and context.game_over == false and context.main_eval and context.beat_boss and not context.blueprint then
       card.ability.extra.hands_played = 0
       return {
         message = localize('k_reset'),
@@ -913,6 +891,7 @@ local mega_slowbro={
       }
     end
   end,
+  attributes = {"xmult", "hands", "scaling", "reset", "boss_blind"},
 }
 local shell={
   name = "shell",
@@ -949,6 +928,9 @@ local shell={
       local edition = {negative = true}
       card:set_edition(edition, true, true)
     end
+  end,
+  in_pool = function(self)
+    return false
   end
 }
 -- Magnemite 081
@@ -979,7 +961,8 @@ local magnemite={
         }
     end
     return level_evo(self, card, context, "j_poke_magneton")
-  end
+  end,
+  attributes = {"xmult", "enhancements", "round_evo"},
 }
 -- Magneton 082
 local magneton={
@@ -1025,7 +1008,8 @@ local magneton={
         }
     end
     return item_evo(self, card, context, "j_poke_magnezone")
-  end
+  end,
+  attributes = {"xmult", "enhancements", "types", "joker", "item_evo"},
 }
 -- Farfetch'd 083
 local farfetchd={
@@ -1065,7 +1049,8 @@ local farfetchd={
         ease_poke_dollars(card, "farfet", card.ability.extra.money)
       end
     end
-  end
+  end,
+  attributes = {"holding", "chance", "economy"},
 }
 -- Doduo 084
 local doduo={
@@ -1106,7 +1091,8 @@ local doduo={
       end
     end
     return level_evo(self, card, context, "j_poke_dodrio")
-  end
+  end,
+  attributes = {"mult", "face", "round_evo"},
 }
 -- Dodrio 085
 local dodrio={
@@ -1163,7 +1149,8 @@ local dodrio={
         }
       end
     end
-  end
+  end,
+  attributes = {"mult", "face", "hand_size"},
 }
 -- Seel 086
 local seel={
@@ -1196,7 +1183,8 @@ local seel={
       juice_card_until(card, eval, true)
     end
     return level_evo(self, card, context, "j_poke_dewgong")
-  end
+  end,
+  attributes = {"chance", "modify_card", "seals", "hands", "round_evo"},
 }
 -- Dewgong 087
 local dewgong={
@@ -1223,7 +1211,8 @@ local dewgong={
       local eval = function() return G.GAME.current_round.hands_played == 0 and not G.RESET_JIGGLES end
       juice_card_until(card, eval, true)
     end
-  end
+  end,
+  attributes = {"modify_card", "seals", "hands"},
 }
 -- Grimer 088
 local grimer={
@@ -1258,6 +1247,7 @@ local grimer={
     end
     return level_evo(self, card, context, "j_poke_muk")
   end,
+  attributes = {"mult", "full_deck", "generation", "round_evo"},
 }
 -- Muk 089
 local muk={
@@ -1311,6 +1301,7 @@ local muk={
       card:juice_up()
     end
   end,
+  attributes = {"mult", "full_deck", "generation", "destroy_card"},
 }
 -- Shellder 090
 local shellder={
@@ -1347,6 +1338,7 @@ local shellder={
     end
     return item_evo(self, card, context, "j_poke_cloyster")
   end,
+  attributes = {"chance", "retrigger", "item_evo"},
 }
 
 return {name = "Pokemon Jokers 61-90", 

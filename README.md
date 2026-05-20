@@ -1,3 +1,6 @@
+# Important
+If you're having trouble loading the mod, try turning off Pixel Smoothing. This can *significantly* reduce the amount of loading needed.
+
 # Pokermon
 Huge thank you to [Lovely](https://github.com/ethangreen-dev/lovely-injector), [Steamodded](https://github.com/Steamopollys/Steamodded), [Cryptid](https://github.com/MathIsFun0/Cryptid) and [Betmma](https://github.com/betmma/my_balatro_mods)!
 This mod and its features would not be possible otherwise. Additonaly thank you to everyone who helps with the project, please check out the credits tab on the mod menu!
@@ -19,7 +22,7 @@ Both [Lovely](https://github.com/ethangreen-dev/lovely-injector) (use latest rel
 
 1. Download the zip file with the contents of the repository. (Code -> Download Zip)\
 2. Create a folder named Pokermon inside your mods folder.
-3. Extract the zip file into the mods folder. Make sure that there is a single folder between the mods folder and the contents. (Ie it should go Mods\Pokermon\contents and not Mods\Pokermon\Pokermon\contents or Mods\contents, where contents are the inner files)
+3. Extract the zip file into the mods folder. Make sure that there is a single folder between the mods folder and the contents. (Ie it should go `Mods\Pokermon\contents` and not `Mods\Pokermon\Pokermon\contents` or `Mods\contents`, where contents are the inner files)
 4. Make sure the files are directly under the Pokermon folder in your mods folder and not under the zip file folder.
    (In other words, unzip the file and then copy and paste the assests, config.lua, pokermon.lua, etc to be under the Pokermon folder in the mods folder) 
 
