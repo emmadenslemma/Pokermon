@@ -595,6 +595,7 @@ local unown_swarm={
   stage = "Other",
   ptype = "Psychic",
   atlas = "j_poke_unown_swarm",
+  soul_atlas = "j_poke_unown_swarm_soul",
   display_size = {w = 290 / 3, h = 285 / 3},
   perishable_compat = true,
   blueprint_compat = true,
@@ -618,17 +619,10 @@ local unown_swarm={
   end,
   set_sprites = function(self, card, front)
     if self.discovered or card.bypass_discovery_center then
-      card.children.center:reset()
-      if card.children.floating_sprite then
-        card.children.floating_sprite.atlas = G.ANIMATION_ATLAS[card.children.center.atlas.name .. "_soul"]
-        card.children.floating_sprite:reset()
-      end
+      card.children.center:set_alignment({offset = {x = 0.1737, y = 0}}) -- (37 / 3) / 71
     end
   end,
   update = function(self, card, dt)
-    card.children.center.VT.x = card.T.x - (G.CARD_H - G.CARD_W) / 2
-    card.children.floating_sprite.VT.x = card.children.center.VT.x
-
 	if card.front_card then
 	  card.front_card.children.center.VT.x = card.children.center.VT.x + 0.35
 	  card.front_card.children.center.VT.y = card.children.center.VT.y
