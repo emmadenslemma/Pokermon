@@ -1062,3 +1062,21 @@ pokermon.has_enhancement = function(card, enhancement, recursive)
     return card.config.center.key == enhancement
   end
 end
+
+--Combee and Vespiquen effects
+local smeared_check_ref = SMODS.smeared_check
+SMODS.smeared_check = function(card, suit, ...)
+  if ((card.base.suit == 'Diamonds' and suit == 'Spades')
+        or (card.base.suit == 'Spades' and suit == 'Diamonds'))
+      and (next(SMODS.find_card('j_poke_combee'))
+        or next(SMODS.find_card('j_poke_vespiquen'))) then
+    return true
+  end
+  return smeared_check_ref(card, suit, ...)
+end
+
+local has_any_suit_ref = SMODS.has_any_suit
+SMODS.has_any_suit = function(card, ...)
+  return (card:get_id() == 12 and next(SMODS.find_card('j_poke_vespiquen')))
+      or has_any_suit_ref(card, ...)
+end

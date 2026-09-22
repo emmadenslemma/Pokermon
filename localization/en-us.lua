@@ -4597,6 +4597,24 @@ return {
                 "{C:attention}3+{} suits to trigger"
               }
             },
+            j_poke_combee = {
+                name = "Combee",
+                text = {
+                    "{C:attention}Holding {C:poke_item}Honey",
+                    "{C:diamonds}Diamonds{} and {C:spades}Spades",
+                    "count as the same suit",
+                    "{C:inactive,s:0.8}(Evolves after scoring a {C:attention,s:0.8}Flower Queen{C:inactive,s:0.8})",
+                }
+            },
+            j_poke_vespiquen = {
+                name = "Vespiquen",
+                text = {
+                    "{C:diamonds}Diamonds{} and {C:spades}Spades",
+                    "count as the same suit",
+                    "{br:2}ERROR - CONTACT THE HIVE",
+                    "{C:attention}Queens{} count as any suit",
+                }
+            },
             j_poke_buizel = {
                 name = 'Buizel',
                 text = {

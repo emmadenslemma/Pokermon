@@ -249,7 +249,45 @@ local roserade={
 -- Wormadam 413
 -- Mothim 414
 -- Combee 415
+local combee={
+  name = "combee",
+  config = { extra = { queens_scored = 0 } },
+  loc_vars = function(self, info_queue, card)
+    info_queue[#info_queue+1] = G.P_CENTERS.c_poke_honey
+  end,
+  rarity = 2,
+  cost = 5,
+  stage = "Basic",
+  ptype = "Grass",
+  gen = 4,
+  blueprint_compat = false,
+  calculate = function(self, card, context)
+    if context.individual and context.cardarea == G.play
+        and context.other_card:get_id() == 12
+        and SMODS.has_enhancement(context.other_card, 'm_poke_flower') then
+      card.ability.extra.queens_scored = card.ability.extra.queens_scored + 1
+    end
+    return pokermon.scaling_evo(self, card, context, 'j_poke_vespiquen', card.ability.extra.queens_scored, 1)
+  end,
+  add_to_deck = function(self, card, from_debuff)
+    if not from_debuff then
+      pokermon.create_consumeable('c_poke_honey')
+    end
+  end,
+}
 -- Vespiquen 416
+local vespiquen = {
+  name = "vespiquen",
+  loc_vars = function(self, info_queue, card)
+    info_queue[#info_queue+1] = G.P_CENTERS.m_poke_flower
+  end,
+  rarity = "poke_safari",
+  cost = 7,
+  stage = "One",
+  ptype = "Grass",
+  gen = 4,
+  blueprint_compat = false,
+}
 -- Pachirisu 417
 -- Buizel 418
 local buizel={
@@ -316,5 +354,5 @@ local floatzel={
 }
 -- Cherubi 420
 return {name = "Pokemon Jokers 391-420", 
-        list = {bidoof, bibarel, kricketot, kricketune, budew, roserade, buizel, floatzel},
+        list = {bidoof, bibarel, kricketot, kricketune, budew, roserade, combee, vespiquen, buizel, floatzel},
 }
