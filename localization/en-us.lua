@@ -470,6 +470,15 @@ return {
                     "{C:inactive}(Drag to rearrange)",
                 }
             },
+            c_poke_honey = {
+                name = "Honey",
+                text = {
+                    "Enhances {C:attention}#1#{} selected",
+                    "card into a {C:attention}Seed Card,",
+                    "or grow {C:attention}#1#{} selected",
+                    "{C:attention}Seed Card #2#{} times",
+                },
+            },
             c_poke_berry_juice = {
                 name = "Berry Juice",
                 text = {
